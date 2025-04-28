@@ -87,6 +87,8 @@ namespace engine
 
       RTN_JOB_CLS_SYNCNOTIFY         = 32,
 
+      RTN_JOB_CLEAR_EXPIRED_CONTEXT  = 33, // clear expired context
+
       RTN_JOB_MAX
    } ;
 

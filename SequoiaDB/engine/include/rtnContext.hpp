@@ -279,6 +279,7 @@ namespace engine
       friend class _rtnContextParaData ;
       friend class _rtnExplainBase ;
       friend class _SDB_RTNCB ;
+      friend class _rtnContextPtr ;
 
       typedef boost::shared_ptr<ossRWMutex>     ctxMutexPtr ;
 
@@ -407,6 +408,21 @@ namespace engine
          {
             _remainingMaxTime = maxTime ;
          }
+         void _enableDetachMode( BOOLEAN enabled )
+         {
+            if ( enabled && _canEnableDetachMode() )
+            {
+               _detachMode = enabled ;
+            }
+            else
+            {
+               _detachMode = FALSE ;
+            }
+         }
+         void _setUsername( const string& username )
+         {
+            _username = username ;
+         }
 
       // prefetch
       public:
@@ -479,6 +495,21 @@ namespace engine
          void enableCloseOnEOF()
          {
             _needCloseOnEOF = TRUE ;
+         }
+
+         BOOLEAN isDetachMode() const
+         {
+            return _detachMode ;
+         }
+
+         const string& getUsername() const
+         {
+            return _username ;
+         }
+
+         BOOLEAN needAuth() const
+         {
+            return _needAuth ;
          }
 
       // Monitor
@@ -571,6 +602,11 @@ namespace engine
             return SDB_OPTION_NOT_SUPPORT;
          }
 
+         virtual BOOLEAN   _canEnableDetachMode() const { return TRUE ; }
+
+         virtual void      _onReturn() {}
+         virtual INT32     _onRebind() { return SDB_OK ; }
+
       protected:
          OSS_INLINE void _empty () ;
          OSS_INLINE void _close () { _isOpened = FALSE ; }
@@ -646,6 +682,7 @@ namespace engine
       private:
          INT64                   _contextID ;
          UINT64                  _eduID ;
+         UINT64                  _createEduID ;
          UINT64                  _opID ;
          _rtnContextStoreBuf     _buffer ;
          INT64                   _totalRecords ;
@@ -676,6 +713,11 @@ namespace engine
          BOOLEAN                 _needTimeout ;
          // indicates whether to close when EOF
          BOOLEAN                 _needCloseOnEOF ;
+         // indicates whether detach mode or not
+         BOOLEAN                 _detachMode ;
+         // indicates the context belong which user
+         string                  _username ;
+         BOOLEAN                 _needAuth ;
 
          /*
             Operation info
@@ -739,27 +781,46 @@ namespace engine
       }
 
       void init( const rtnContextInternalPtr &contextPtr,
-                 IExecutor *pExecutor )
+                 IExecutor *pExecutor,
+                 BOOLEAN updateOperator = TRUE )
       {
          SDB_ASSERT( NULL == get(), "should not be initialized" ) ;
 
          rtnContextInternalPtr::operator =( contextPtr ) ;
          _pExecutor = pExecutor ;
+
+         if ( updateOperator && _pExecutor && _pExecutor->getSession() &&
+              _pExecutor->getSession()->getOperator() )
+         {
+            IOperator *pOpreator = _pExecutor->getSession()->getOperator() ;
+            /// set the operation remaining max time
+            pOpreator->setMaxTime( get()->_remainingMaxTime ) ;
+         }
       }
 
       void release()
       {
-         // set the last LSN of context from executor
-         if ( ( NULL != get() ) &&
-              ( get()->isOpened() ) &&
-              ( get()->isWrite() ) &&
-              ( get()->getDPSCB() ) &&
-              ( NULL != _pExecutor ) &&
-              ( DPS_INVALID_LSN_OFFSET != _pExecutor->getEndLsn() ) &&
-              ( ( DPS_INVALID_LSN_OFFSET == get()->getEndLSN() ) ||
-                ( _pExecutor->getEndLsn() > get()->getEndLSN() ) ) )
+         if ( NULL != get() && get()->isOpened() )
          {
-            get()->setEndLSN( _pExecutor->getEndLsn() ) ;
+            // set the last LSN of context from executor
+            if ( get()->isWrite() && get()->getDPSCB() && NULL != _pExecutor &&
+                 DPS_INVALID_LSN_OFFSET != _pExecutor->getEndLsn() &&
+                 ( DPS_INVALID_LSN_OFFSET == get()->getEndLSN() ||
+                   _pExecutor->getEndLsn() > get()->getEndLSN() ) )
+            {
+               get()->setEndLSN( _pExecutor->getEndLsn() ) ;
+            }
+
+            /// update the last process tick
+            get()->updateLastProcessTick() ;
+
+            /// update remaining max time
+            if ( _pExecutor && _pExecutor->getSession() &&
+                 _pExecutor->getSession()->getOperator() )
+            {
+               IOperator *pOpreator = _pExecutor->getSession()->getOperator() ;
+               get()->_setRemainingMaxTime( pOpreator->getRemainingMaxTime() ) ;
+            }
          }
          rtnContextInternalPtr::release() ;
       }

@@ -1282,7 +1282,6 @@ namespace engine
       pmdSubSession *pSubSession    = NULL ;
       _sessionChange                = FALSE ;
       IRemoteSiteHandle *pSiteHandle= _pSite->getHandle() ;
-      IRemoteMsgPreprocessor *pPreProcessor = _pSite->getPreprocessor() ;
       BOOLEAN gotEvent              = FALSE ;
       monClassQuery *monQuery       = getEDUCB()->getMonQueryCB() ;
       _milliTimeout = _milliTimeoutHard ;
@@ -1437,11 +1436,6 @@ namespace engine
                   }
                }
             }
-            continue ;
-         }
-
-         if ( pPreProcessor && pPreProcessor->preProcess( event ) )
-         {
             continue ;
          }
 
@@ -1613,7 +1607,6 @@ namespace engine
       _pAgent = NULL ;
       _pLatch = NULL ;
       _pHandler = NULL ;
-      _pPreProcessor = NULL ;
 
       ossMemset( _assitNodeBuff, 0, sizeof( _assitNodeBuff ) ) ;
 

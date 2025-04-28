@@ -105,20 +105,11 @@ namespace engine
          pNewAdd->flags = pOldHeader->flags ;
          pos += pHeader->messageLength ;
 
-         if ( MSG_PACKET == pOldHeader->opCode )
-         {
-            ossMemcpy( (void*)pMsgPacket, (void*)pOldHeader,
-                       sizeof( MsgHeader ) ) ;
-         }
-         else
-         {
-            pMsgPacket->opCode = MSG_PACKET ;
-            pMsgPacket->requestID = pOldHeader->requestID ;
-            pMsgPacket->routeID.value = pOldHeader->routeID.value ;
-            pMsgPacket->TID = pOldHeader->TID ;
-            pMsgPacket->globalID = pOldHeader->globalID ;
-            pMsgPacket->flags = pOldHeader->flags ;
-         }
+         /// copy the old header to new packet msg
+         ossMemcpy( (void*)pMsgPacket, (void*)pOldHeader,
+                    sizeof( MsgHeader ) ) ;
+         /// set packet msg opcode and length
+         pMsgPacket->opCode = MSG_PACKET ;
          pMsgPacket->messageLength = totalLen ;
 
          /// old
@@ -1288,18 +1279,31 @@ namespace engine
    */
    _coordNoSessionInitHandler::_coordNoSessionInitHandler()
    {
+      _allowReconnect = FALSE ;
    }
 
    _coordNoSessionInitHandler::~_coordNoSessionInitHandler()
    {
    }
 
+   void _coordNoSessionInitHandler::enableReconnect()
+   {
+      _allowReconnect = TRUE ;
+   }
+
    INT32 _coordNoSessionInitHandler::onSendConnect( _pmdSubSession *pSub,
                                                     const MsgHeader *pReq,
                                                     BOOLEAN isFirst )
    {
-      /// already disconnect
-      return SDB_COORD_REMOTE_DISC ;
+      if ( _allowReconnect )
+      {
+         return _coordRemoteHandlerBase::onSendConnect( pSub, pReq, isFirst ) ;
+      }
+      else
+      {
+         /// already disconnect
+         return SDB_COORD_REMOTE_DISC ;
+      }
    }
 
    /*

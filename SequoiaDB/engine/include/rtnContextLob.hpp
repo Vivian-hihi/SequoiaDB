@@ -117,6 +117,7 @@ namespace engine
       virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
       virtual BOOLEAN   _canPrefetch () const { return TRUE ; }
       virtual void  _toString( stringstream &ss ) ;
+      virtual BOOLEAN   _canEnableDetachMode() const { return FALSE ; }
 
    private:
       INT32 _createLobID( bson::OID &oid ) ;

@@ -42,6 +42,9 @@
 
 #include "sdbInterface.hpp"
 #include "pmdEnv.hpp"
+#include "ossUtil.hpp"
+#include "dpsDef.hpp"
+#include "pd.hpp"
 
 #if defined ( SDB_ENGINE )
 #include "utilReplSizePlan.hpp"
@@ -63,6 +66,7 @@ namespace engine
          _maxTime = -1 ;
          _beginTick = 0 ;
          _hasInterruptOnTimeLimit = FALSE ;
+         _isContextDetachMode = FALSE ;
 #if defined ( SDB_ENGINE )
          _orgReplSize = 1 ;
          _replStrategy = SDB_CONSISTENCY_PRY_LOC_MAJOR ;
@@ -127,13 +131,40 @@ namespace engine
          return _hasInterruptOnTimeLimit ;
       }
 
+      virtual BOOLEAN isContextDetachMode() const
+      {
+         return _isContextDetachMode ;
+      }
+
    public:
-      void setMsg( MsgHeader *pMsg )
+      void setMsg( MsgHeader *pMsg, IExecutor *cb )
       {
          if ( pMsg )
          {
             _pMsg = pMsg ;
             _globalID = _pMsg->globalID ;
+
+            if ( cb )
+            {
+               /// in transaction, can't use detach mode context
+               if ( DPS_INVALID_TRANS_ID != cb->getTransID() ||
+                    NULL == cb->getSession() ||
+                    ( SDB_SESSION_LOCAL != cb->getSession()->sessionType() &&
+                      SDB_SESSION_SHARD != cb->getSession()->sessionType() &&
+                      SDB_SESSION_PROTOCOL != cb->getSession()->sessionType() ) )
+               {
+                  OSS_BIT_CLEAR( _pMsg->flags, FLAG_DETACH_CONTEXT ) ;
+                  _isContextDetachMode = FALSE ;
+               }
+               else if ( _isContextDetachMode )
+               {
+                  OSS_BIT_SET( _pMsg->flags, FLAG_DETACH_CONTEXT ) ;
+               }
+               else if ( OSS_BIT_TEST( _pMsg->flags, FLAG_DETACH_CONTEXT ) )
+               {
+                  _isContextDetachMode = TRUE ;
+               }
+            }
          }
       }
       void reset()
@@ -142,6 +173,32 @@ namespace engine
          _maxTime = -1 ;
          _beginTick = 0 ;
          _hasInterruptOnTimeLimit = FALSE ;
+         _isContextDetachMode = FALSE ;
+      }
+
+      void enableContextDetachMode( IExecutor *cb )
+      {
+         /// not in transaction
+         if ( cb && DPS_INVALID_TRANS_ID == cb->getTransID() &&
+              NULL != cb->getSession() &&
+              ( SDB_SESSION_LOCAL != cb->getSession()->sessionType() ||
+                SDB_SESSION_SHARD != cb->getSession()->sessionType() ||
+                SDB_SESSION_PROTOCOL != cb->getSession()->sessionType() ) )
+         {
+            _isContextDetachMode = TRUE ;
+            if ( _pMsg )
+            {
+               OSS_BIT_SET( _pMsg->flags, FLAG_DETACH_CONTEXT ) ;
+            }
+         }
+      }
+      void disableContextDetachMode( IExecutor *cb )
+      {
+         _isContextDetachMode = FALSE ;
+         if ( _pMsg )
+         {
+            OSS_BIT_CLEAR( _pMsg->flags, FLAG_DETACH_CONTEXT ) ;
+         }
       }
 
 #if defined ( SDB_ENGINE )
@@ -216,6 +273,7 @@ namespace engine
       INT64                    _maxTime ;     /// ms
       UINT64                   _beginTick ;
       mutable BOOLEAN          _hasInterruptOnTimeLimit ;
+      BOOLEAN                  _isContextDetachMode ;
 #if defined ( SDB_ENGINE )
       INT16                    _orgReplSize ;
       SDB_CONSISTENCY_STRATEGY _replStrategy ;

@@ -39,6 +39,7 @@
 #include "rtnCommand.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "msgMessage.hpp"
 
 using namespace bson ;
 
@@ -86,6 +87,9 @@ namespace engine
       _detachEvent.signal() ;
 
       _isClosed    = TRUE ;
+
+      /// the client version is current
+      _client.setClientVersion( SDB_PROTOCOL_VER_CUR ) ;
 
       PD_TRACE_EXIT ( SDB__PMDSN ) ;
    }
@@ -1666,12 +1670,7 @@ namespace engine
          goto done ;
       }
 
-      reply.header.opCode = MAKE_REPLY_TYPE( pReqMsg->opCode ) ;
-      reply.header.requestID = pReqMsg->requestID ;
-      reply.header.routeID.value = 0 ;
-      reply.header.TID  = pReqMsg->TID ;
-      reply.header.messageLength = sizeof ( MsgOpReply ) ;
-      reply.header.globalID = pReqMsg->globalID ;
+      msgFillReplyByReq( reply, pReqMsg ) ;
       reply.flags = rc ;
       reply.contextID = -1 ;
       reply.numReturned = 1 ;

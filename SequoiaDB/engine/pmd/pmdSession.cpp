@@ -362,7 +362,7 @@ namespace engine
          pMsg->globalID = globalID ;
       }
 
-      ((pmdOperator*)pOperator)->setMsg( pMsg ) ;
+      ((pmdOperator*)pOperator)->setMsg( pMsg, _pEDUCB ) ;
 
       return ;
    }

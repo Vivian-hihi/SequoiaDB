@@ -6175,7 +6175,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       goto error ;
    }
    // allocate a fake EDUCB
-   cb = SDB_OSS_NEW pmdEDUCB ( NULL, EDU_TYPE_AGENT ) ;
+   cb = SDB_OSS_NEW pmdEDUCB ( NULL, EDU_TYPE_AGENT, NULL ) ;
    if ( !cb )
    {
       dumpAndShowPrintf ( "*** Error: Failed to allocate memory for educb, exit" OSS_NEWLINE ) ;

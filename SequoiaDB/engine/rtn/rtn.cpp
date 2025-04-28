@@ -1595,18 +1595,26 @@ namespace engine
                            pmdEDUCB *cb, SDB_RTNCB *rtnCB )
    {
       INT32 rc = SDB_OK ;
+      INT32 rcTmp = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNKILLCONTEXTS );
       for ( INT32 i = 0; i< numContexts ; i++ )
       {
-         if ( rtnCB->contextExist ( pContextIDs[i] ) &&
-              !cb->contextFind ( pContextIDs[i] ) )
+         rtnContextPtr pContext ;
+         rcTmp = rtnCB->contextFind( pContextIDs[i], pContext, cb ) ;
+         if ( SDB_RTN_CONTEXT_NOTEXIST == rcTmp )
          {
-            PD_LOG ( PDWARNING, "Context %lld is not owned by current session",
-                     pContextIDs[i] ) ;
-            // if the context doesn't owned by the current session, let's show
-            // warning message and jump to next context
+            /// if the context not exist
+            PD_LOG ( PDWARNING, "Context %lld doesn't exist", pContextIDs[i] ) ;
             continue ;
          }
+         else if ( rcTmp )
+         {
+            rc = rc ? rc : rcTmp ;
+            PD_LOG ( PDWARNING, "Failed to find context %lld", pContextIDs[i] ) ;
+            continue ;
+         }
+         pContext.release() ;
+
          rtnCB->contextDelete ( pContextIDs[i], cb ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNKILLCONTEXTS, rc );

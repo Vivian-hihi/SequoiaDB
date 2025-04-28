@@ -46,7 +46,9 @@ enum SDB_PROTOCOL_VERSION
 {
    SDB_PROTOCOL_VER_INVALID = 0,
    SDB_PROTOCOL_VER_1 = 1,
-   SDB_PROTOCOL_VER_2 = 2
+   SDB_PROTOCOL_VER_2 = 2,
+
+   SDB_PROTOCOL_VER_CUR = SDB_PROTOCOL_VER_2
 } ;
 
 #define MAKE_REPLY_TYPE(type)       (INT32)((UINT32)type | 0x80000000)
@@ -751,7 +753,7 @@ typedef struct _MsgHeaderV1 MsgHeaderV1 ;
 #define MSG_COMM_EYE_DEFAULT_BACK      MAKE_REPLY_TYPE(0)
 
 #define FLAG_RESULT_DETAIL             0x0001
-#define FLAG_PROCESS_DETAIL            0x0002
+#define FLAG_DETACH_CONTEXT            0x0002
 #define FLAG_NOCOMPRESSED_ADVICE       0x0004
 #define FLAG_COMPRESSED                0x0008
 
@@ -774,7 +776,7 @@ struct _MsgHeader
      TID(0),
      requestID(0),
      opCode(0),
-     version(SDB_PROTOCOL_VER_2),
+     version(SDB_PROTOCOL_VER_CUR),
      flags(0)
    {
       routeID.value = MSG_INVALID_ROUTEID ;
@@ -999,9 +1001,7 @@ typedef struct _MsgOpMsg MsgOpMsg ;
 
 // The first bson object after the header is the result object.
 #define SDB_REPLY_MASK_NONE            0
-#define SDB_REPLY_MASK_DATA            0x00000001
-#define SDB_REPLY_MASK_RESULT          0x00000002
-#define SDB_REPLY_MASK_PROCESS         0X00000003
+#define SDB_REPLY_MASK_RESULT          0x00000001
 
 struct _MsgOpReplyV1
 {
@@ -1027,7 +1027,7 @@ struct _MsgOpReplyV1
    : contextID(-1),
      flags(0),
      startFrom(0),
-     numReturned(-1)
+     numReturned(0)
    {
    }
 #endif /* __cplusplus */
@@ -1069,7 +1069,7 @@ struct _MsgOpReply
    : contextID(-1),
      flags(0),
      startFrom(0),
-     numReturned(-1),
+     numReturned(0),
      returnMask( SDB_REPLY_MASK_NONE ),
      dataLen(0)
    {

@@ -106,7 +106,7 @@ namespace engine
             {
                MsgHeader *pMsg = ((MsgHeader*)(eventData._Data)) ;
 
-               ((pmdOperator*)pSdbOp)->setMsg( pMsg ) ;
+               ((pmdOperator*)pSdbOp)->setMsg( pMsg, cb ) ;
 
                //restore handle
                pObj->dispatchMsg( (NET_HANDLE)eventData._userData,

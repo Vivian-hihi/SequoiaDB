@@ -1535,7 +1535,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
@@ -1611,7 +1611,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
@@ -1738,7 +1738,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
@@ -1853,7 +1853,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
@@ -1994,7 +1994,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
@@ -2107,7 +2107,7 @@ namespace engine
       }
 
       header->eye = MSG_COMM_EYE_DEFAULT ;
-      header->version = SDB_PROTOCOL_VER_2 ;
+      header->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( header->flags, FLAG_COMPRESSED ) ;
       ossMemset( header->reserve, 0, sizeof(header->reserve) ) ;
 
@@ -2246,7 +2246,7 @@ namespace engine
       }
 
       message->eye = MSG_COMM_EYE_DEFAULT ;
-      message->version = SDB_PROTOCOL_VER_2 ;
+      message->version = SDB_PROTOCOL_VER_CUR ;
       OSS_BIT_CLEAR( message->flags, FLAG_COMPRESSED ) ;
       ossMemset( message->reserve, 0, sizeof(message->reserve) ) ;
 

@@ -71,6 +71,7 @@ namespace engine
       _pSession         = NULL ;
 
       _isModify         = FALSE ;
+      _oprTimeout       = -1 ;
    }
 
    _rtnContextCoord::~_rtnContextCoord ()
@@ -231,7 +232,7 @@ namespace engine
       _emptyContextMap.clear() ;
 
       // kill sub context
-      if ( cb && ( !cb->isInterrupted() || cb->isOnlySelfWhenInterrupt() ) )
+      if ( cb && ( isDetachMode() || !cb->isInterrupted() || cb->isOnlySelfWhenInterrupt() ) )
       {
          MsgOpKillContexts killMsg ;
          MsgRouteID routeID ;
@@ -352,7 +353,6 @@ namespace engine
       pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       pmdRemoteSessionSite *pSite = NULL ;
       coordSessionPropSite *pPropSite = NULL ;
-      INT64 timeout = -1 ;
 
       if ( _isOpened )
       {
@@ -371,9 +371,9 @@ namespace engine
       pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
       if ( pPropSite )
       {
-         timeout = pPropSite->getOperationTimeout() ;
+         _oprTimeout = pPropSite->getOperationTimeout() ;
       }
-      _pSession = pSite->addSession( timeout, &_handler ) ;
+      _pSession = pSite->addSession( _oprTimeout, &_handler ) ;
       if ( !_pSession )
       {
          PD_LOG( PDERROR, "Create remote session failed in session[%s]",
@@ -389,7 +389,16 @@ namespace engine
 
       _numToReturn = _options.getLimit() ;
       _numToSkip = _options.getSkip() ;
-      _preRead = preRead ;
+
+      if ( isDetachMode() )
+      {
+         _preRead = FALSE ;
+         _handler.enableReconnect() ;
+      }
+      else
+      {
+         _preRead = preRead ;
+      }
 
       _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _options.getOrderBy() ) ;
       PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
@@ -933,7 +942,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Send request to empty nodes failed, rc: %d",
                    rc ) ;
 
-      if ( _isModify || _requireExplicitSorting() )
+      if ( isDetachMode() || _isModify || _requireExplicitSorting() )
       {
          waitAll = TRUE ;
       }
@@ -1551,6 +1560,71 @@ namespace engine
       PD_TRACE_EXITRC( SDB_COSUBCON_GENORDERKEY, rc ) ;
       return rc ;
 
+   error:
+      goto done ;
+   }
+
+   void _rtnContextCoord::_onReturn()
+   {
+      if ( NULL != _pSession )
+      {
+         SDB_ASSERT( 0 == _prepareContextMap.size(), "Prepared contexts must be zero" ) ;
+         pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+         if ( NULL != cb->getRemoteSite() )
+         {
+            pmdRemoteSessionSite *pSite = (pmdRemoteSessionSite *)( cb->getRemoteSite() ) ;
+            pSite->removeSession( _pSession->sessionID() ) ;
+            _pSession = NULL ;
+         }
+      }
+   }
+
+   INT32 _rtnContextCoord::_onRebind()
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      pmdRemoteSessionSite *pSite = NULL ;
+      coordSessionPropSite *pPropSite = NULL ;
+      INT64 timeout = -1 ;
+
+      SDB_ASSERT( !_pSession, "Remote session must be NULL" ) ;
+
+      if ( !_isOpened )
+      {
+         goto done ;
+      }
+
+      if ( _pSession )
+      {
+         goto done ;
+      }
+
+      pSite = ( pmdRemoteSessionSite* )cb->getRemoteSite() ;
+      if ( pSite )
+      {
+         pPropSite = ( coordSessionPropSite* )pSite->getUserData() ;
+      }
+
+      if ( pPropSite )
+      {
+         timeout = pPropSite->getOperationTimeout() ;
+      }
+      else
+      {
+         timeout = _oprTimeout ;
+      }
+
+      _pSession = pSite->addSession( timeout, &_handler ) ;
+      if ( !_pSession )
+      {
+         PD_LOG( PDERROR, "Create remote session failed in session[%s]",
+                 cb->getName() ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
    error:
       goto done ;
    }

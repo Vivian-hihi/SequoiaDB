@@ -325,6 +325,8 @@ namespace engine
 
       virtual BOOLEAN needInterrupt() const = 0 ;
       virtual BOOLEAN isInterruptOnTimeLimit() const = 0 ;
+
+      virtual BOOLEAN isContextDetachMode() const = 0 ;
    } ;
    typedef _IOperator IOperator ;
 
@@ -533,7 +535,7 @@ namespace engine
          /*
             Context Related
          */
-         virtual BOOLEAN   contextInsert( INT64 contextID ) = 0 ;
+         virtual BOOLEAN   contextInsert( INT64 contextID, BOOLEAN isDetachMode ) = 0 ;
          virtual void      contextDelete( INT64 contextID ) = 0 ;
          virtual INT64     contextPeek() = 0 ;
          virtual BOOLEAN   contextFind( INT64 contextID ) = 0 ;
@@ -631,6 +633,7 @@ namespace engine
       public:
          virtual void      contextDelete( INT64 contextID, IExecutor *pExe ) = 0 ;
          virtual BOOLEAN   contextFind( INT64 contextID, UINT64 &ownedEDUID ) = 0 ;
+         virtual BOOLEAN   returnContext( INT64 contextID ) = 0 ;
    } ;
    typedef _IContextMgr IContextMgr ;
 

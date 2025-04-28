@@ -216,7 +216,7 @@ namespace engine
       reqMsg->header.opCode        = MSG_AUTH_VERIFY_REQ ;
       reqMsg->header.messageLength = sizeof( MsgAuthentication ) + authSize ;
       reqMsg->header.eye           = MSG_COMM_EYE_DEFAULT ;
-      reqMsg->header.version       = SDB_PROTOCOL_VER_2 ;
+      reqMsg->header.version       = SDB_PROTOCOL_VER_CUR ;
       reqMsg->header.flags         = 0 ;
       reqMsg->header.routeID.value = 0 ;
       reqMsg->header.TID           = ossGetCurrentThreadID() ;
@@ -302,7 +302,7 @@ namespace engine
       }
 
       match = BSON( FIELD_NAME_PREFERRED_INSTANCE_LEGACY << preferedInstance ) ;
-      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match, 
+      rc = msgBuildQueryMsg( &pBuff, &buffSize, pCommand, 0, 0, 0, -1, &match,
                              NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
       {

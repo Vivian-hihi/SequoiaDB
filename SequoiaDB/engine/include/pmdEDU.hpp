@@ -103,6 +103,7 @@ namespace engine
 
    public:
       typedef ossPoolSet<INT64>              SET_CONTEXT ;
+      typedef ossPoolMap<INT64, BOOLEAN>     MAP_CONTEXT ;
 
    public:
          /*
@@ -193,7 +194,7 @@ namespace engine
          /*
             Context Related
          */
-         virtual BOOLEAN   contextInsert( INT64 contextID ) ;
+         virtual BOOLEAN   contextInsert( INT64 contextID, BOOLEAN isDetachMode ) ;
          virtual void      contextDelete( INT64 contextID ) ;
          virtual INT64     contextPeek() ;
          virtual BOOLEAN   contextFind( INT64 contextID ) ;
@@ -339,7 +340,7 @@ namespace engine
          pmdOperator*      getOperator() { return &_operator ; }
 
    public:
-      _pmdEDUCB( _pmdEDUMgr *mgr, INT32 type ) ;
+      _pmdEDUCB( _pmdEDUMgr *mgr, INT32 type, IResource *pResource = NULL ) ;
       ~_pmdEDUCB() ;
 
       void        clear() ;
@@ -393,6 +394,8 @@ namespace engine
       const CHAR* getSource() const ;
       const CHAR* getUserName() const { return _userName.c_str() ; }
       const CHAR* getPassword() const { return _passWord.c_str() ; }
+      const string& getUserNameStr() const { return _userName ; }
+      const string& getPasswordStr() const { return _passWord ; }
 
       void postEvent ( pmdEDUEvent const &data )
       {
@@ -773,6 +776,7 @@ namespace engine
 
    private :
       _pmdEDUMgr     *_eduMgr ;
+      _IResource     *_pResource ;
       monSpinSLatch  _mutex ;
 
       pmdEDUEventQueue _queue ;
@@ -872,7 +876,7 @@ namespace engine
       CHAR                    *_pBuffer ;
       UINT32                  _buffSize ;
 
-      SET_CONTEXT             _contextList ;
+      MAP_CONTEXT             _contextList ;
       INT64                   _curAutoTransCtxID ;
       INT64                   _currentContextID ;
 

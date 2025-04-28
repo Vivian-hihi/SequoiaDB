@@ -138,8 +138,6 @@ namespace engine
                                             const BOOLEAN &isStartMode ) ;
 
    protected:
-      void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
-
       INT32 _mapData2DCMgr( _clsDCMgr *pDCMgr ) ;
 
    // tool fuctions

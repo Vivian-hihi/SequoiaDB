@@ -41,56 +41,113 @@
 #include "dmsCB.hpp"
 #include "rtnBackgroundJob.hpp"
 #include "pmdLightJobMgr.hpp"
+#include "pmdEnv.hpp"
+#include "pmdDummySession.hpp"
 #include "pmdController.hpp"
 
 using namespace std;
 namespace engine
 {
-
    /*
-      _rtnClearExpireContextJob define
-    */
-   class _rtnClearExpireContextJob : public utilLightJob
+      _rtnClearExpireContextJob implement
+   */
+   _rtnClearExpireContextJob::_rtnClearExpireContextJob()
    {
-   public:
-      _rtnClearExpireContextJob( SDB_RTNCB *rtnCB )
-      : _rtnCB( rtnCB )
+   }
+
+   _rtnClearExpireContextJob::~_rtnClearExpireContextJob()
+   {
+   }
+
+   RTN_JOB_TYPE _rtnClearExpireContextJob::type() const
+   {
+      return RTN_JOB_CLEAR_EXPIRED_CONTEXT ;
+   }
+
+   const CHAR* _rtnClearExpireContextJob::name() const
+   {
+      return "CLEAR-EXPIRED-CONTEXT" ;
+   }
+
+   BOOLEAN _rtnClearExpireContextJob::muteXOn( const _rtnBaseJob *pOther )
+   {
+      if ( type() == pOther->type() )
       {
-         SDB_ASSERT( NULL != rtnCB, "rtnCB is invalid" ) ;
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
+   INT32 _rtnClearExpireContextJob::doit()
+   {
+      SDB_RTNCB *pRtnCB = sdbGetRTNCB() ;
+      pmdDummySession dummySession ;
+      pmdEDUEvent event ;
+      UINT64 lastTick = pmdGetDBTick() ;
+
+      /// attach session
+      dummySession.attachCB( _pEDUCB ) ;
+
+      /// register to remote session manager
+      if ( sdbGetPMDController()->getRSManager() )
+      {
+         sdbGetPMDController()->getRSManager()->registerEDU( _pEDUCB ) ;
       }
 
-      virtual ~_rtnClearExpireContextJob()
-      {
-      }
+      /// reset the event
+      pRtnCB->getEvent()->reset() ;
 
-      virtual const CHAR *name() const
+      while ( PMD_IS_DB_UP() )
       {
-         return "ClearContextJob" ;
-      }
-
-      virtual INT32 doit( IExecutor *pExe,
-                          UTIL_LJOB_DO_RESULT &result,
-                          UINT64 &sleepTime )
-      {
-         sleepTime = RTN_CTX_CHECK_INTERVAL ;
-
-         if ( PMD_IS_DB_DOWN() )
+         if ( _pEDUCB->waitEvent( event, OSS_ONE_SEC ) )
          {
-            result = UTIL_LJOB_DO_FINISH ;
-         }
-         else
-         {
-            _rtnCB->preDelExpiredContext() ;
-            result = UTIL_LJOB_DO_CONT ;
+            pmdEduEventRelease( event, _pEDUCB ) ;
          }
 
-         return SDB_OK ;
+         if( pmdGetTickSpanTime( lastTick ) >= RTN_CTX_CHECK_INTERVAL )
+         {
+            // clear interrupt flag
+            _pEDUCB->resetInterrupt() ;
+            _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
+            _pEDUCB->resetLsn() ;
+            pdClearLastError() ;
+
+            try
+            {
+               pRtnCB->preDelExpiredContext( _pEDUCB ) ;
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+               /// ignore
+            }
+            lastTick = pmdGetDBTick() ;
+         }
       }
 
-   protected:
-      SDB_RTNCB * _rtnCB ;
-   } ;
-   typedef class _rtnClearExpireContextJob rtnClearExpireContextJob ;
+      try
+      {
+         pRtnCB->preDelExpiredContext( _pEDUCB, TRUE ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDWARNING, "Occur exception: %s", e.what() ) ;
+         /// ignore
+      }
+
+      /// signal the event
+      pRtnCB->getEvent()->signal() ;
+
+      /// unreg from remote session manager
+      if ( sdbGetPMDController()->getRSManager() )
+      {
+         sdbGetPMDController()->getRSManager()->unregEUD( _pEDUCB ) ;
+      }
+      /// detach session
+      dummySession.detachCB() ;
+
+      return SDB_OK ;
+   }
 
    /*
       _rtnClearUserCacheJob define
@@ -176,6 +233,9 @@ namespace engine
 
       pmdOptionsCB *optionCB = pmdGetOptionCB() ;
 
+      /// set signal
+      _event.signal() ;
+
       _pLTMgr = SDB_OSS_NEW rtnLocalTaskMgr() ;
       if ( !_pLTMgr )
       {
@@ -231,12 +291,13 @@ namespace engine
 
       {
          UINT64 jobID = 0 ;
-         rtnClearExpireContextJob *job = SDB_OSS_NEW rtnClearExpireContextJob( this ) ;
-         PD_CHECK( NULL != job, SDB_OOM, error, PDERROR, "Failed to allocate clear context job" ) ;
+         rtnClearExpireContextJob *job = SDB_OSS_NEW rtnClearExpireContextJob() ;
+         PD_CHECK( NULL != job, SDB_OOM, error, PDERROR,
+                  "Failed to allocate clear context job" ) ;
 
-         rc = job->submit( TRUE, UTIL_LJOB_PRI_LOWEST, UTIL_LJOB_DFT_AVG_COST, &jobID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to submit clear context job, rc: %d", rc ) ;
-         PD_LOG( PDDEBUG, "submit clear context job [%llu]", jobID ) ;
+         rc = rtnGetJobMgr()->startJob( job, RTN_JOB_MUTEX_REUSE, &jobID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to start clear-expired-context job, rc: %d", rc ) ;
+         PD_LOG( PDDEBUG, "Start clear-expired-context job [%llu]", jobID ) ;
       }
 
       if ( pmdGetOptionCB()->getUserCacheInterval() > 0 )
@@ -266,6 +327,9 @@ namespace engine
 
    INT32 _SDB_RTNCB::deactive ()
    {
+      /// wait event
+      _event.wait( RTN_CTX_CHECK_INTERVAL ) ;
+
       if ( _remoteMessenger )
       {
          _remoteMessenger->deactive() ;
@@ -334,13 +398,56 @@ namespace engine
       _contextTimeout = optionCB->contextTimeout() ;
    }
 
-   void _SDB_RTNCB::_setGlobalID( _pmdEDUCB *cb, rtnContextPtr &pContext )
+   INT32 _SDB_RTNCB::_fixContextInfo( _pmdEDUCB *cb, rtnContextInternalPtr &pContext )
    {
+      INT32 rc = SDB_OK ;
+
       if ( cb )
       {
          pmdOperator *pOperator = cb->getOperator() ;
          MsgGlobalID sessionOpGlobalID  = pOperator->getGlobalID() ;
          MsgGlobalID contextGlobalID    = pContext->getGlobalID() ;
+
+         /// reset the eduID when the it is invalid
+         if ( PMD_INVALID_EDUID == pContext->eduID() )
+         {
+            SDB_ASSERT( pContext->isDetachMode(), "Context is not detach mode" ) ;
+            if ( cb->contextInsert( pContext->contextID(), pContext->isDetachMode() ) )
+            {
+               if ( !ossCompareAndSwap64( &(pContext->_eduID),
+                                          PMD_INVALID_EDUID,
+                                          cb->getID() ) )
+               {
+                  cb->contextDelete( pContext->contextID() ) ;
+
+                  PD_LOG ( PDWARNING, "Context %lld does not owned by "
+                           "current session", pContext->contextID() ) ;
+                  rc = SDB_RTN_CONTEXT_NOTOWNED ;
+                  goto error ;
+               }
+
+               /// rebind
+               rc = pContext->_onRebind() ;
+               if ( rc )
+               {
+                  goto error ;
+               }
+
+               if ( cb->getID() == pContext->_createEduID )
+               {
+                  pContext->_needAuth = FALSE ;
+               }
+               else
+               {
+                  pContext->_needAuth = TRUE ;
+               }
+            }
+            else
+            {
+               rc = SDB_OOM ;
+               goto error ;
+            }
+         }
 
          if ( sessionOpGlobalID.getQueryID() != contextGlobalID.getQueryID() )
          {
@@ -354,6 +461,11 @@ namespace engine
             pContext->_setGlobalID( sessionOpGlobalID ) ;
          }
       }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    BOOLEAN _SDB_RTNCB::contextFind( INT64 contextID, UINT64 &ownedEDUID )
@@ -378,16 +490,20 @@ namespace engine
       std::pair<rtnContextInternalPtr, bool> ret = _contextMap.find( contextID ) ;
       if ( ret.second )
       {
-         if ( cb && !cb->contextFind( contextID ) )
+         if ( PMD_INVALID_EDUID != (ret.first)->eduID() &&
+              cb && !cb->contextFind( contextID ) )
          {
-            PD_LOG ( PDWARNING, "Context %lld does not owned by "
-                     "current session", contextID ) ;
-            rc = SDB_RTN_CONTEXT_NOTEXIST ;
+            PD_LOG_MSG ( PDWARNING, "Context %lld does not owned by "
+                         "current session", contextID ) ;
+            rc = SDB_RTN_CONTEXT_NOTOWNED ;
          }
          else
          {
-            context.init( ret.first, cb ) ;
-            _setGlobalID( cb, context ) ;
+            rc = _fixContextInfo( cb, ret.first ) ;
+            if ( SDB_OK == rc )
+            {
+               context.init( ret.first, cb ) ;
+            }
          }
       }
       else
@@ -413,7 +529,6 @@ namespace engine
          if ( type == tempContext->getType() )
          {
             context = tempContext ;
-            _setGlobalID( cb, context ) ;
          }
          else
          {
@@ -437,6 +552,22 @@ namespace engine
       return _contextMap.find( contextID ).second ? TRUE : FALSE ;
    }
 
+   BOOLEAN _SDB_RTNCB::returnContext( INT64 contextID )
+   {
+      /// set the context eduID to invalid
+      std::pair<rtnContextInternalPtr, bool> ret = _contextMap.find( contextID ) ;
+      if ( ret.second && PMD_IS_DB_UP() )
+      {
+         SDB_ASSERT( ret.first->isDetachMode(), "Context is not detach mode" ) ;
+         (ret.first)->_onReturn() ;
+         (ret.first)->_eduID = PMD_INVALID_EDUID ;
+         (ret.first)->_needAuth = FALSE ;
+
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_RTNCB_CONTEXTDEL, "_SDB_RTNCB::contextDelete" )
    void _SDB_RTNCB::contextDelete ( INT64 contextID, IExecutor *pExe )
    {
@@ -454,7 +585,37 @@ namespace engine
          pair<rtnContextInternalPtr, bool> ret = _contextMap.find( contextID ) ;
          if ( ret.second )
          {
-            pContext = ret.first ;
+            /// must use rtnContextInternalPtr&, because rtnContextInternalPtr is thread local
+            /// self. When many thread call the context in the same time, the ref maybe occur
+            /// some wrongs.
+            rtnContextInternalPtr &tmpPtr = ret.first ;
+
+            /// reset the eduID when the it is invalid
+            if ( PMD_INVALID_EDUID == tmpPtr->eduID() )
+            {
+               SDB_ASSERT( tmpPtr->isDetachMode(), "Context is not detach mode" ) ;
+               if ( !ossCompareAndSwap64( &(tmpPtr->_eduID),
+                                          PMD_INVALID_EDUID,
+                                          cb->getID() ) )
+               {
+                  PD_LOG ( PDWARNING, "Context %lld does not owned by "
+                           "current session", tmpPtr->contextID() ) ;
+                  goto done ;
+               }
+
+               /// rebind
+               INT32 rcTmp = tmpPtr->_onRebind() ;
+               if ( rcTmp )
+               {
+                  PD_LOG( PDWARNING, "Rebind context(%lld) to edu(%lld) failed when "
+                          "deleting context, rc: %d", tmpPtr->contextID(),
+                          tmpPtr->eduID(), rcTmp ) ;
+                  tmpPtr->_eduID = PMD_INVALID_EDUID ;
+                  goto done ;
+               }
+            }
+
+            pContext = tmpPtr ;
             _contextMap.erase( contextID ) ;
          }
       }
@@ -496,6 +657,7 @@ namespace engine
                  "buffer reference: %d)", contextID, ctxRef, bufRef ) ;
       }
 
+   done:
       PD_TRACE_EXIT ( SDB__SDB_RTNCB_CONTEXTDEL ) ;
       return ;
    }
@@ -543,21 +705,20 @@ namespace engine
       }
       FOR_EACH_CMAP_ELEMENT_END
 
-      _notifyKillContexts( contexts ) ;
+      _notifyKillContexts( contexts, sdbGetThreadExecutor() ) ;
 
    done:
       return contexts.size() ;
    }
 
-   UINT32 _SDB_RTNCB::preDelExpiredContext()
+   UINT32 _SDB_RTNCB::preDelExpiredContext( IExecutor *cb, BOOLEAN forceDetached )
    {
       _RTN_EDU_CTX_MAP contexts ;
 
       // config is in minutes, convert to milliseconds
       UINT64 contextTimeoutMS = _contextTimeout * 60 * OSS_ONE_SEC ;
 
-      if ( 0 >= contextTimeoutMS ||
-           0 == _contextMap.size( TRUE ) )
+      if ( !forceDetached && ( 0 >= contextTimeoutMS || 0 == _contextMap.size( TRUE ) ) )
       {
          goto done ;
       }
@@ -568,8 +729,9 @@ namespace engine
 
          if ( pContext &&
               pContext->isOpened() &&
-              pContext->needTimeout() && 1 == it->second.refCount() &&
-              pmdGetTickSpanTime( pContext->getLastProcessTick() ) > contextTimeoutMS )
+              ( ( pContext->needTimeout() &&
+                  pmdGetTickSpanTime( pContext->getLastProcessTick() ) > contextTimeoutMS ) ||
+                ( forceDetached && PMD_INVALID_EDUID == pContext->eduID() ) ) )
          {
             try
             {
@@ -589,7 +751,7 @@ namespace engine
       }
       FOR_EACH_CMAP_ELEMENT_END
 
-      _notifyKillContexts( contexts ) ;
+      _notifyKillContexts( contexts, cb ) ;
 
    done:
       return contexts.size() ;
@@ -679,17 +841,25 @@ namespace engine
       goto done ;
    }
 
-   void _SDB_RTNCB::_notifyKillContexts( const _RTN_EDU_CTX_MAP &contexts )
+   void _SDB_RTNCB::_notifyKillContexts( const _RTN_EDU_CTX_MAP &contexts, IExecutor *cb )
    {
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
 
       for ( _RTN_EDU_CTX_MAP::const_iterator iter = contexts.begin() ;
             iter != contexts.end() ;
             ++ iter )
       {
+         eduID = iter->first ;
+
+         if ( PMD_INVALID_EDUID == eduID )
+         {
+            eduID = cb->getID() ;
+         }
+
          try
          {
-            pEDUMgr->postEDUPost( iter->first,
+            pEDUMgr->postEDUPost( eduID,
                                   PMD_EDU_EVENT_KILLCONTEXT,
                                   PMD_EDU_MEM_NONE,
                                   NULL,
@@ -705,6 +875,9 @@ namespace engine
          PD_LOG( PDDEBUG, "post kill context [%lld] to EDU [%llu]",
                  iter->second, iter->first ) ;
       }
+
+      /// need to check urgent events
+      cb->isInterrupted( TRUE ) ;
    }
 
    INT32 _SDB_RTNCB::contextNew( RTN_CONTEXT_TYPE type,
@@ -714,6 +887,7 @@ namespace engine
    {
       rtnContextInternalPtr newContext ;
       monSvcTaskInfo *pTaskInfo = NULL ;
+      BOOLEAN isDetachMode = FALSE ;
 
       if ( pEDUCB->isFromLocal() )
       {
@@ -737,6 +911,11 @@ namespace engine
          }
       }
 
+      if ( PMD_IS_DB_UP() && pEDUCB->getOperator()->isContextDetachMode() )
+      {
+         isDetachMode = TRUE ;
+      }
+
       // if hit max signed 64 bit integer?
       if ( _contextIdGenerator.fetch() < 0 )
       {
@@ -756,20 +935,29 @@ namespace engine
          return SDB_OOM ;
       }
 
+      newContext->_enableDetachMode( isDetachMode ) ;
+      newContext->_setUsername( pEDUCB->getUserNameStr() ) ;
+      /// when the context is not detached, but the operator enabled detach mode,
+      /// so, shoud disable the operator's detach mode
+      if ( pEDUCB->getOperator()->isContextDetachMode() && !newContext->isDetachMode() )
+      {
+         pEDUCB->getOperator()->disableContextDetachMode( pEDUCB ) ;
+      }
+
       if ( !( _contextMap.insert( _contextId, newContext ).second ) )
       {
          newContext.release() ;
          return SDB_OOM ;
       }
 
-      if ( !pEDUCB->contextInsert( _contextId ) )
+      if ( !pEDUCB->contextInsert( _contextId, newContext->isDetachMode() ) )
       {
          _contextMap.erase( _contextId ) ;
          newContext.release() ;
          return SDB_OOM ;
       }
 
-      context.init( newContext, pEDUCB ) ;
+      context.init( newContext, pEDUCB, FALSE ) ;
       contextID = _contextId ;
 
       pTaskInfo = pEDUCB->getMonAppCB()->getSvcTaskInfo() ;
@@ -794,7 +982,7 @@ namespace engine
       context->setOpID( pEDUCB->getWritingID() ) ;
 
       // only check timeout for contexts from local service
-      if ( !pEDUCB->isFromLocal() )
+      if ( !pEDUCB->isFromLocal() && !context->isDetachMode() )
       {
          context->disableTimeout() ;
       }
