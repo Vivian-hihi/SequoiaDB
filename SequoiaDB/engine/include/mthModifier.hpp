@@ -207,7 +207,7 @@ namespace engine
                            BSONElement &e,
                            Builder &b,
                            SINT32 *modifierIndex,
-                           BSONObj currentObj = BSONObj() ) ;
+                           const BSONObj &currentObj = BSONObj() ) ;
 
       // when requested update want to change something that not exist in
       // original
@@ -242,13 +242,13 @@ namespace engine
                            BSONObjIteratorSorted &es,
                            SINT32 *modifierIndex,
                            BOOLEAN hasCreateNewRoot,
-                           BSONObj currentObj = BSONObj() ) ;
+                           const BSONObj &currentObj = BSONObj() ) ;
 
       template<class Builder>
       INT32 _buildNewObjReplace( Builder &b, BSONObjIteratorSorted &es ) ;
 
       void _resetErrorElement() ;
-      void _saveErrorElement( BSONElement &errorEle ) ;
+      void _saveErrorElement( const BSONElement &errorEle ) ;
       void _saveErrorElement( const CHAR *fieldName ) ;
       INT32 _getFieldModifier( const CHAR* fieldName, BSONElement& fieldEle ) ;
 

@@ -68,9 +68,9 @@ namespace engine
                                                      UINT32 attr )
    {
       sptProperty *add = SDB_OSS_NEW sptProperty() ;
-      add->setConvertor( _convertor ) ;
       if ( add )
       {
+         add->setConvertor( _convertor ) ;
          add->setName( name ) ;
          add->setAttr( attr ) ;
          _valProperties.push_back( add ) ;
@@ -82,9 +82,9 @@ namespace engine
                                                 UINT32 attr )
    {
       sptProperty *add = SDB_OSS_NEW sptProperty() ;
-      add->setConvertor( _convertor ) ;
       if ( add )
       {
+         add->setConvertor( _convertor ) ;
          add->setName( name ) ;
          add->setAttr( attr ) ;
          _selfProperties.push_back( add ) ;

@@ -304,7 +304,7 @@ namespace engine
          {
             if ( ele.embeddedObject().firstElement().eoo() )
             {
-               return TRUE ;
+               result = TRUE ;
                goto done ;
             }
          }

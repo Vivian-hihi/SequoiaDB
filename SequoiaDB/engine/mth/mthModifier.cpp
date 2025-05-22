@@ -199,6 +199,11 @@ namespace engine
                          ele.toString().c_str() ) ;
             goto error ;
          }
+         else if ( ossStrcmp ( ele.fieldName(), DMS_ID_KEY_NAME ) == 0 )
+         {
+            PD_LOG_MSG ( PDERROR, "ID field can't be renamed" ) ;
+            goto error ;
+         }
       }
       else if ( ( PUSH_ALL == type || PULL_ALL == type ||
                   PULL_ALL_BY == type ) &&
@@ -238,10 +243,10 @@ namespace engine
                       ele.toString().c_str() ) ;
          goto error ;
       }
-      else if ( ( UNSET == type || RENAME == type ) &&
+      else if ( UNSET == type &&
                 ossStrcmp ( ele.fieldName(), DMS_ID_KEY_NAME ) == 0 )
       {
-         PD_LOG_MSG ( PDERROR, "ID field can't be renamed or unset" ) ;
+         PD_LOG_MSG ( PDERROR, "ID field can't be unset" ) ;
          goto error ;
       }
       else if ( ( REPLACE == type || KEEP == type ) &&
@@ -1075,7 +1080,7 @@ namespace engine
          }
          INT32 orgNum = n ;
          BSONElementSet::iterator it ;
-         for ( it = eleset.begin(); it != eleset.end(); it++ )
+         for ( it = eleset.begin(); it != eleset.end(); ++it )
          {
             sub.appendAs( (*it), sub.numStr(n++) ) ;
          }
@@ -1952,7 +1957,7 @@ namespace engine
                }
                else
                {
-                  iter++ ;
+                  ++iter ;
                }
             }
          }
@@ -2258,7 +2263,7 @@ namespace engine
             eleset.insert( j.next() ) ;
          }
          BSONElementSet::iterator it ;
-         for ( it = eleset.begin(); it != eleset.end(); it++ )
+         for ( it = eleset.begin(); it != eleset.end(); ++it )
          {
             bb.appendAs((*it), bb.numStr(n++)) ;
          }
@@ -2486,7 +2491,7 @@ namespace engine
                                       BSONElement &e,
                                       Builder &b,
                                       SINT32 *modifierIndex,
-                                      BSONObj currentObj )
+                                      const BSONObj &currentObj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__ALYCHG ) ;
@@ -2664,7 +2669,7 @@ namespace engine
                                       BSONObjIteratorSorted &es,
                                       SINT32 *modifierIndex,
                                       BOOLEAN hasCreateNewRoot,
-                                      BSONObj currentObj )
+                                      const BSONObj &currentObj )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__BLDNEWOBJ ) ;
@@ -2976,7 +2981,7 @@ namespace engine
       _errorFieldElement = BSONElement() ;
    }
 
-   void _mthModifier::_saveErrorElement( BSONElement &errorEle )
+   void _mthModifier::_saveErrorElement( const BSONElement &errorEle )
    {
       _errorFieldElement = errorEle ;
    }

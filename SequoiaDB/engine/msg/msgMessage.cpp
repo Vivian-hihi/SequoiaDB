@@ -556,7 +556,6 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
       PD_LOG ( PDERROR, "Failed to check buffer" ) ;
       goto error ;
    }
-   pInsert = (MsgOpInsert*)(*ppBuffer) ;
    // now the buffer is large enough
    pInsert = (MsgOpInsert*)(*ppBuffer) ;
    pInsert->header.messageLength = packetLength ;

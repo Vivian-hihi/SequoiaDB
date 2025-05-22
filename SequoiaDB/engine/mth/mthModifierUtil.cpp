@@ -356,7 +356,6 @@ namespace engine
       _modifiersMap[ MTH_MODIFIER_PULL_BY ] = PULL_BY ;
       _modifiersMap[ MTH_MODIFIER_PULL_ALL ] = PULL_ALL ;
       _modifiersMap[ MTH_MODIFIER_PULL_ALL_BY ] = PULL_ALL_BY ;
-      _modifiersMap[ MTH_MODIFIER_PULL_ALL_BY ] = PULL_ALL_BY ;
       _modifiersMap[ MTH_MODIFIER_POP ] =  POP ;
       _modifiersMap[ MTH_MODIFIER_UNSET ] =  UNSET ;
       _modifiersMap[ MTH_MODIFIER_BITNOT ] = BITNOT ;

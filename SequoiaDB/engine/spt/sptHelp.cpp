@@ -320,7 +320,6 @@ namespace engine
                                          const vector<sptFuncMetaInfo> &input )
    {
       INT32 rc = SDB_OK ;
-      vector<string> vec ;
       vector<sptFuncMetaInfo>::const_iterator it ;
 
       cout << endl ;
