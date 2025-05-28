@@ -286,6 +286,7 @@ namespace engine
       INT32 replyMsgSize = 0 ;
       INT32 replyHeaderLen = sizeof(MsgOpReply) ;
       CHAR *pReplyMsgBuff = NULL ;
+      MsgRouteID localID = _evSuitPtr->getFrame()->getLocal() ;
       UTIL_COMPRESSOR_TYPE currentCompressor = netGetNetcompressor() ;
 
       peerNodeNetCompressor = UTIL_COMPRESSOR_INVALID ;
@@ -302,8 +303,13 @@ namespace engine
          goto error ;
       }
 
+      if ( MSG_ROUTE_REPL_SERVICE_CTRL == _id.columns.serviceID )
+      {
+         localID.columns.serviceID = _id.columns.serviceID ;
+      }
+
       rc = msgBuildHeartBeatMsg( &pBuffer, &bufferSize, getAndIncMsgID(),
-                                 _evSuitPtr->getFrame()->getLocal().value, options ) ;
+                                 localID.value, options ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to build heartbeat msg, rc: %d", rc ) ;
 
       rc = socket.send( (const CHAR *)pBuffer, bufferSize, sentLen ) ;
@@ -1038,7 +1044,10 @@ namespace engine
             /// add to route table
             if ( MSG_INVALID_ROUTEID == _id.value )
             {
-               if ( MSG_INVALID_ROUTEID != _header.routeID.value )
+               const MsgRouteID &localID = _evSuitPtr->getFrame()->getLocal() ;
+               if ( MSG_INVALID_ROUTEID != _header.routeID.value &&
+                    ( _header.routeID.columns.nodeID != localID.columns.nodeID ||
+                      _header.routeID.columns.groupID != localID.columns.groupID ) )
                {
                   // check service ID
                   if ( _header.routeID.columns.serviceID >=
@@ -1053,8 +1062,7 @@ namespace engine
                      goto error_close ;
                   }
                   _id = _header.routeID ;
-                  if ( SDB_OK !=
-                        _evSuitPtr->getFrame()->_addRoute( _getSharedBase() ) )
+                  if ( SDB_OK != _evSuitPtr->getFrame()->_addRoute( _getSharedBase() ) )
                   {
                      goto error_close ;
                   }
