@@ -413,6 +413,7 @@ namespace engine
 #if defined (_LINUX )
       _mainEDU->setThreadID ( ossPThreadSelf() ) ;
 #endif
+      _mainEDU->setID( PMD_MAIN_EDUID ) ;
       _mainEDU->setTID ( ossGetCurrentThreadID() ) ;
       if ( NULL == pmdGetThreadEDUCB() )
       {
