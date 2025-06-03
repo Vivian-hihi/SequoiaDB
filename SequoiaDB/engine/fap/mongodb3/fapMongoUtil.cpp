@@ -702,12 +702,17 @@ INT32 mongoCheckUpdator( BSONObj &updator, BOOLEAN &hasOp, BSONObj &setOnInsert 
          BSONElement ele = itr.next() ;
          if ( '$' == ele.fieldName()[0] )
          {
+            hasOp = TRUE ;
             if ( 0 == ossStrcmp( ele.fieldName(), FAP_MONGO_UPDATOR_SETINSERT ) )
             {
                needBuild = TRUE ;
                break ;
             }
-            hasOp = TRUE ;
+         }
+         else
+         {
+            /// when first is not operation, it's {a:x,b:y} for replace
+            break ;
          }
       }
 
@@ -720,6 +725,7 @@ INT32 mongoCheckUpdator( BSONObj &updator, BOOLEAN &hasOp, BSONObj &setOnInsert 
             BSONElement ele = itr.next() ;
             if ( '$' == ele.fieldName()[0] )
             {
+               hasOp = TRUE ;
                if ( 0 == ossStrcmp( ele.fieldName(), FAP_MONGO_UPDATOR_SETINSERT ) )
                {
                   if ( Object == ele.type() )
@@ -728,13 +734,14 @@ INT32 mongoCheckUpdator( BSONObj &updator, BOOLEAN &hasOp, BSONObj &setOnInsert 
                   }
                   continue ;
                }
-               else
-               {
-                  hasOp = TRUE ;
-               }
             }
 
             builder.append( ele ) ;
+         }
+
+         if ( builder.isEmpty() )
+         {
+            builder.append( FAP_MONGO_UPDATOR_SET, BSONObj() ) ;
          }
          updator = builder.obj() ;
       }

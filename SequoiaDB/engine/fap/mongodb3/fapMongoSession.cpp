@@ -1058,7 +1058,6 @@ INT32 _mongoSession::_processMsg( const CHAR *pMsg, BSONObj &errorObj )
 
    _onMsgEnd( rc, (MsgHeader *) pMsg ) ;
 
-done:
    PD_TRACE_EXITRC( SDB_FAPMONGO_PROCESSMSG2, rc ) ;
    return rc ;
 }
