@@ -173,6 +173,8 @@ namespace engine
       _isAffectGIndex = FALSE ;
 
       _doReplay = FALSE ;
+
+      _detachContexNum = 0 ;
    }
 
    _pmdEDUCB::~_pmdEDUCB ()
@@ -365,7 +367,12 @@ namespace engine
       _operator.reset() ;
 
       /// return the detach context
-      if ( _pResource )
+      returnDetachContext() ;
+   }
+
+   void _pmdEDUCB::returnDetachContext()
+   {
+      if ( _pResource && _detachContexNum > 0 )
       {
          SINT64 contextID = -1 ;
          ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
@@ -384,6 +391,7 @@ namespace engine
                   }
                   _contextList.erase( contextID ) ;
                   ++it ;
+                  --_detachContexNum ;
                   continue ;
                }
             }
@@ -905,7 +913,13 @@ namespace engine
       try
       {
          ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-         _contextList.insert ( MAP_CONTEXT::value_type( contextID, isDetachMode ) ) ;
+         if ( _contextList.insert ( MAP_CONTEXT::value_type( contextID, isDetachMode ) ).second )
+         {
+            if ( isDetachMode )
+            {
+               ++_detachContexNum ;
+            }
+         }
          setCurrentContextID( contextID ) ;
          result = TRUE ;
       }
@@ -919,11 +933,21 @@ namespace engine
 
    void _pmdEDUCB::contextDelete( INT64 contextID )
    {
+      MAP_CONTEXT::iterator it ;
       ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
-      _contextList.erase ( contextID ) ;
-      if ( _curAutoTransCtxID == contextID )
+      it = _contextList.find( contextID ) ;
+      if ( it != _contextList.end() )
       {
-         _curAutoTransCtxID = -1 ;
+         if ( it->second )
+         {
+            --_detachContexNum ;
+         }
+         _contextList.erase( it ) ;
+
+         if ( _curAutoTransCtxID == contextID )
+         {
+            _curAutoTransCtxID = -1 ;
+         }
       }
    }
 
@@ -940,6 +964,10 @@ namespace engine
       }
       it = _contextList.begin() ;
       contextID = it->first ;
+      if ( it->second )
+      {
+         --_detachContexNum ;
+      }
       _contextList.erase( contextID ) ;
 
       if ( _curAutoTransCtxID == contextID )

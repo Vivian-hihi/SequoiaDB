@@ -380,6 +380,8 @@ namespace engine
       BOOLEAN     isOnlySelfWhenInterrupt() const ;
       INT32       getInterruptRC() const ;
 
+      void        returnDetachContext() ;
+
       void        updateConf() ;
 
       void        setUserInfo( const string &userName,
@@ -892,6 +894,8 @@ namespace engine
       pmdOperator             _operator ;
 
       pmdDataExInfo           _dataExInfo ;
+
+      UINT32                  _detachContexNum ;
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 

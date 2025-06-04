@@ -1088,6 +1088,7 @@ namespace engine
       INT32 rc         = SDB_OK ;
       INT32 numToRead  = 0 ;
       rtnContextPtr pContext ;
+      BOOLEAN delContextOnFail = TRUE ;
 
       rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
       PD_RC_CHECK( rc, PDERROR, "Session[%s] extract get more msg failed, "
@@ -1109,6 +1110,11 @@ namespace engine
       {
          PD_LOG ( PDERROR, "Failed to find context %lld, rc: %d", contextID,
                   rc ) ;
+         if ( SDB_RTN_CONTEXT_NOTOWNED == rc )
+         {
+            /// can't delete the context
+            delContextOnFail = FALSE ;
+         }
          goto error ;
       }
 
@@ -1122,8 +1128,8 @@ namespace engine
             PD_LOG_MSG( PDERROR, "Authorization for getmore context(%lld) failed, the session "
                         "user(%s) is not the same with the context(%s)", contextID,
                         eduCB()->getUserName(), pContext->getUsername().c_str() ) ;
-            /// can't delete context
-            contextID = -1 ;
+            /// can't delete the context
+            delContextOnFail = FALSE ;
             goto error ;
          }
       }
@@ -1160,7 +1166,7 @@ namespace engine
 
       return rc ;
    error:
-      if ( -1 != contextID )
+      if ( -1 != contextID && delContextOnFail )
       {
          _pRTNCB->contextDelete( contextID, eduCB() ) ;
       }

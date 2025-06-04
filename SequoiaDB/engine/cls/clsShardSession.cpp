@@ -1191,6 +1191,9 @@ namespace engine
       }
       else
       {
+         /// return detach context before reply
+         eduCB()->returnDetachContext() ;
+
          msgFillReplyByReq( _replyHeader, msg ) ;
          if ( opCode > ( SINT32 )MSG_LOB_BEGIN && opCode < ( SINT32 )MSG_LOB_END )
          {
