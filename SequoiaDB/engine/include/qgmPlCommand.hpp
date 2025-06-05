@@ -58,7 +58,7 @@ namespace engine
       virtual ~_qgmPlCommand() ;
 
    public:
-      virtual void close() ;
+      virtual void close( _pmdEDUCB *eduCB ) ;
 
       virtual string toString() const ;
 
@@ -71,13 +71,13 @@ namespace engine
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 
-      virtual INT32 _fetchNext( qgmFetchOut &next ) ;
+      virtual INT32 _fetchNext( qgmFetchOut &next, _pmdEDUCB *eduCB ) ;
 
       INT32 _executeOnData( _pmdEDUCB *eduCB ) ;
 
       INT32 _executeOnCoord( _pmdEDUCB *eduCB ) ;
 
-      void _killContext() ;
+      void _killContext( _pmdEDUCB *eduCB ) ;
 
    private:
       INT32 _commandType ;

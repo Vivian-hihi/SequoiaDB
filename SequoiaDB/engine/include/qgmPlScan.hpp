@@ -66,7 +66,7 @@ namespace engine
       virtual ~_qgmPlScan() ;
 
    public:
-      virtual void close() ;
+      virtual void close( _pmdEDUCB *eduCB ) ;
 
       virtual string toString() const ;
 
@@ -85,10 +85,10 @@ namespace engine
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) ;
 
-      virtual INT32 _fetchNext ( qgmFetchOut &next ) ;
+      virtual INT32 _fetchNext ( qgmFetchOut &next, _pmdEDUCB *eduCB ) ;
 
-      void _killContext() ;
-      INT32 _fetch( const CHAR *&result ) ;
+      void _killContext( _pmdEDUCB *eduCB ) ;
+      INT32 _fetch( const CHAR *&result, _pmdEDUCB *eduCB ) ;
 
    protected:
       BSONObj _condition ;

@@ -78,7 +78,7 @@ namespace engine
       INT32    checkTransAutoCommit( BOOLEAN dpsValid, _pmdEDUCB *eduCB ) ;
 
    public:
-      virtual void close() ;
+      virtual void close( _pmdEDUCB *eduCB ) ;
 
       virtual string toString() const { return "" ; }
 
@@ -127,7 +127,7 @@ namespace engine
 
       INT32 execute( _pmdEDUCB *eduCB ) ;
 
-      INT32 fetchNext( qgmFetchOut &next ) ;
+      INT32 fetchNext( qgmFetchOut &next, _pmdEDUCB *eduCB ) ;
 
    protected:
 
@@ -138,13 +138,12 @@ namespace engine
    private:
       virtual INT32 _execute( _pmdEDUCB *eduCB ) = 0 ;
 
-      virtual INT32 _fetchNext( qgmFetchOut &next ) = 0 ;
+      virtual INT32 _fetchNext( qgmFetchOut &next, _pmdEDUCB *eduCB ) = 0 ;
 
    protected:
       QGM_VARLIST _varlist ;
       QGM_PINPUT _input ;
       QGM_PLAN_TYPE _type ;
-      _pmdEDUCB *_eduCB ;
       qgmField _alias ;
       BOOLEAN _executed ;
       BOOLEAN _initialized ;
