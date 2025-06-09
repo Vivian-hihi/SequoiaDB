@@ -771,17 +771,14 @@ namespace engine
             if ( _recordLock == DPS_TRANSLOCK_X &&
                  _context->isMBLock( EXCLUSIVE ) )
             {
-               if ( !_pSu->pushToDeletingList( _context, _recordRW ) )
+               /// direct delete
+               INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
+                                               0, cb, NULL, NULL,
+                                               _callback.getTransRecordInfo() ) ;
+               if ( rc1 )
                {
-                  /// direct delete
-                  INT32 rc1 = _pSu->deleteRecord( _context, _curRID,
-                                                  0, cb, NULL, NULL,
-                                                  _callback.getTransRecordInfo() ) ;
-                  if ( rc1 )
-                  {
-                     PD_LOG( PDWARNING, "Failed to delete the deleting record, "
-                             "rc: %d", rc ) ;
-                  }
+                  PD_LOG( PDWARNING, "Failed to delete the deleting record, "
+                          "rc: %d", rc ) ;
                }
             }
 
@@ -2467,16 +2464,13 @@ namespace engine
             if ( _recordLock == DPS_TRANSLOCK_X &&
                  _context->isMBLock( EXCLUSIVE ) )
             {
-               if ( !_pSu->pushToDeletingList( _context, _recordRW ) )
+               rc = _pSu->deleteRecord( _context, _curRID, 0,
+                                        cb, NULL, NULL,
+                                        _callback.getTransRecordInfo() ) ;
+               if ( SDB_OK != rc )
                {
-                  rc = _pSu->deleteRecord( _context, _curRID, 0,
-                                           cb, NULL, NULL,
-                                           _callback.getTransRecordInfo() ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     PD_LOG( PDWARNING, "Failed to delete the deleting record, "
-                             "rc: %d", rc ) ;
-                  }
+                  PD_LOG( PDWARNING, "Failed to delete the deleting record, "
+                          "rc: %d", rc ) ;
                }
             }
 
