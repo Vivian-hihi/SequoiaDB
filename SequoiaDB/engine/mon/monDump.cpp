@@ -35,8 +35,6 @@
 
 *******************************************************************************/
 #include "core.hpp"
-#include <set>
-#include <map>
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "pmdEDU.hpp"
@@ -66,6 +64,9 @@
 #include "msgDef.h"
 #include "monMgr.hpp"
 #include "utilMath.hpp"
+
+#include <set>
+#include <map>
 
 using namespace bson ;
 using namespace boost::asio::ip ;

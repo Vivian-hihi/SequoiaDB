@@ -32,8 +32,6 @@
 #include "msgMessage.hpp"
 #include "omDef.hpp"
 #include "pmdEDU.hpp"
-#include <map>
-#include <string>
 
 using namespace bson ;
 
@@ -76,7 +74,7 @@ namespace engine
          goto error ;
       }
 
-      rc = msgExtractReply( (CHAR *)reply, &flag, &_originalContextID, 
+      rc = msgExtractReply( (CHAR *)reply, &flag, &_originalContextID,
                             &startFrom, &numReturned, objVec ) ;
       if ( SDB_OK != rc )
       {
@@ -134,9 +132,9 @@ namespace engine
       return RTN_CONTEXT_OM_TRANSFER ;
    }
 
-   _dmsStorageUnit* _omContextTransfer::getSU() 
-   { 
-      return NULL ; 
+   _dmsStorageUnit* _omContextTransfer::getSU()
+   {
+      return NULL ;
    }
 
    INT32 _omContextTransfer::_appendReply( MsgHeader *reply )
@@ -149,7 +147,7 @@ namespace engine
       UINT32 i           = 0 ;
       vector<BSONObj> objVec ;
 
-      rc = msgExtractReply( (CHAR *)reply, &flag, &contextID, &startFrom, 
+      rc = msgExtractReply( (CHAR *)reply, &flag, &contextID, &startFrom,
                             &numReturned, objVec ) ;
       if ( SDB_OK != rc )
       {

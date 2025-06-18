@@ -37,12 +37,12 @@
 #include "dpsLogWrapper.hpp"
 #include "netRouteAgent.hpp"
 #include "clsBase.hpp"
-#include <map>
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "pmd.hpp"
 #include "utilReplSizePlan.hpp"
 #include "utilBitmap.hpp"
+#include <map>
 
 using namespace std ;
 

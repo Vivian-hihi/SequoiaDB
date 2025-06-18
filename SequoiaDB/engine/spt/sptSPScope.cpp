@@ -759,7 +759,7 @@ namespace engine
             {
                goto error ;
             }
-            ossPrintf( "%s"OSS_NEWLINE, strPrint.c_str() ) ;
+            ossPrintf( "%s" OSS_NEWLINE, strPrint.c_str() ) ;
          }
       }
 

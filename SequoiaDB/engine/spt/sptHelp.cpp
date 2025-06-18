@@ -51,9 +51,9 @@ namespace engine
 {
 
    string _sptHelp::_lang = "en" ;
-   
+
    _sptHelp::_sptHelp()
-   {      
+   {
       _meta = sptClassMetaInfo( _lang ) ;
    }
 
@@ -67,9 +67,9 @@ namespace engine
    {
       _lang = lang == "cn" ? "cn" : "en" ;
    }
-   
-   // "fuzzyFuncName" can be "Oma/Oma::createCoord/createCoord" or something like 
-   // "create" for fuzzy searching 
+
+   // "fuzzyFuncName" can be "Oma/Oma::createCoord/createCoord" or something like
+   // "create" for fuzzy searching
    INT32 _sptHelp::displayManual( const string &fuzzyFuncName,
                                   const string &matcher,
                                   BOOLEAN isInstance )
@@ -78,7 +78,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string filePath ;
       vector<string> vec ;
-      
+
       rc = _meta.queryFuncInfo( fuzzyFuncName, matcher, isInstance, vec ) ;
       if ( rc )
       {
@@ -90,20 +90,20 @@ namespace engine
          stringstream ss ;
          if ( matcher == "" )
          {
-            ss << "No manual for method \"" << fuzzyFuncName.c_str() << "\"." ; 
+            ss << "No manual for method \"" << fuzzyFuncName.c_str() << "\"." ;
          }
          else
          {
             if ( isInstance )
             {
-               ss << "No manual for method \"" << fuzzyFuncName.c_str() 
+               ss << "No manual for method \"" << fuzzyFuncName.c_str()
                   << "\" in current object." ;
             }
             else
             {
-               ss << "No manual for method \"" << fuzzyFuncName.c_str() 
-                  << "\" in class " << matcher << "." ; 
-            }  
+               ss << "No manual for method \"" << fuzzyFuncName.c_str()
+                  << "\" in class " << matcher << "." ;
+            }
          }
          cout << ss.str().c_str() << endl ;
          goto done ;
@@ -122,9 +122,9 @@ namespace engine
             {
                if ( std::string::npos != it->find( SPT_GLOBAL_CLASS ) )
                {
-                  pos = it->find(SPT_CLASS_SEPARATOR) + 
+                  pos = it->find(SPT_CLASS_SEPARATOR) +
                      ossStrlen( SPT_CLASS_SEPARATOR ) ;
-                  funcName = it->substr( pos ) ;               
+                  funcName = it->substr( pos ) ;
                }
                else
                {
@@ -133,12 +133,12 @@ namespace engine
             }
             else
             {
-               pos = it->find(SPT_CLASS_SEPARATOR) + 
+               pos = it->find(SPT_CLASS_SEPARATOR) +
                   ossStrlen( SPT_CLASS_SEPARATOR ) ;
                funcName = it->substr( pos ) ;
             }
             // if the fuzzyFuncName is full match with the function's name,
-            // such as fuzzyFuncName is "find", and vector contains 
+            // such as fuzzyFuncName is "find", and vector contains
             // "find,findOne", let's display the manual of "find"
             if ( fuzzyFuncName == funcName )
             {
@@ -213,7 +213,7 @@ namespace engine
    }
 
 
-   INT32 _sptHelp::displayMethod( const string &className, 
+   INT32 _sptHelp::displayMethod( const string &className,
                                   BOOLEAN isInstance )
    {
 #if defined ( SDB_SHELL )
@@ -222,7 +222,7 @@ namespace engine
 
       if ( TRUE == isInstance )
       {
-         rc = _meta.getMetaInfo( className, 
+         rc = _meta.getMetaInfo( className,
                                  SPT_FUNC_INSTANCE, vec ) ;
          if ( rc )
          {
@@ -255,7 +255,7 @@ namespace engine
          }
          // display instance methods
          vec.clear() ;
-         rc = _meta.getMetaInfo( className, 
+         rc = _meta.getMetaInfo( className,
                                  SPT_FUNC_INSTANCE, vec ) ;
          if ( rc ) goto error ;
          if ( vec.size() > 0 )
@@ -279,9 +279,9 @@ namespace engine
 #if defined ( SDB_SHELL )
       INT32 rc = SDB_OK ;
       vector<sptFuncMetaInfo> vec ;
-      
-      rc = _meta.getMetaInfo( "Global", 
-                              SPT_FUNC_CONSTRUCTOR | 
+
+      rc = _meta.getMetaInfo( "Global",
+                              SPT_FUNC_CONSTRUCTOR |
                               SPT_FUNC_STATIC |
                               SPT_FUNC_INSTANCE, vec ) ;
       if ( rc ) goto error ;
@@ -309,8 +309,8 @@ namespace engine
                                           const vector<sptFuncMetaInfo> &input )
    {
       cout << endl ;
-      cout << setw( SPT_SYNOPSIS_INDENT ) << " " 
-         << "--Constructor methods for class \"" 
+      cout << setw( SPT_SYNOPSIS_INDENT ) << " "
+         << "--Constructor methods for class \""
          << className << "\":" << endl ;
       return _displayMethod( input ) ;
    }
@@ -322,8 +322,8 @@ namespace engine
       vector<sptFuncMetaInfo>::const_iterator it ;
 
       cout << endl ;
-      cout << setw( SPT_SYNOPSIS_INDENT ) << " " 
-         << "--Static methods for class \"" 
+      cout << setw( SPT_SYNOPSIS_INDENT ) << " "
+         << "--Static methods for class \""
          <<  className << "\":" << endl ;
       for ( it = input.begin(); it != input.end(); it++ )
       {
@@ -350,8 +350,8 @@ namespace engine
                                            const vector<sptFuncMetaInfo> &input )
    {
       cout << endl ;
-      cout << setw( SPT_SYNOPSIS_INDENT ) << " " 
-         << "--Instance methods for class \"" 
+      cout << setw( SPT_SYNOPSIS_INDENT ) << " "
+         << "--Instance methods for class \""
          <<  className << "\":" << endl ;
       return _displayMethod( input ) ;
    }
@@ -365,14 +365,14 @@ namespace engine
 
       for ( it = input.begin(); it != input.end(); it++ )
       {
-         rc = _displayEntry( it->syntax, it->desc, 
+         rc = _displayEntry( it->syntax, it->desc,
                              synopsisIndent, briefIndent ) ;
          if ( rc )
          {
             goto error ;
          }
       }
-      
+
    done:
       return rc ;
    error:
@@ -380,7 +380,7 @@ namespace engine
    }
 
    // i am not going to display cutline in windows system
-   INT32 _sptHelp::_displayEntry( const vector<string> &synopsis, 
+   INT32 _sptHelp::_displayEntry( const vector<string> &synopsis,
                                   const string &brief,
                                   INT32 synopsisIndent,
                                   INT32 briefIndent )
@@ -405,7 +405,7 @@ namespace engine
          INT32 i = 0 ;
          while( i < (INT32)( synopsis.size() - 1 ) )
          {
-            cout << setw( synopsisIndent ) << " " << synopsis[i] << endl ; 
+            cout << setw( synopsisIndent ) << " " << synopsis[i] << endl ;
             i++ ;
          }
       }
@@ -423,7 +423,7 @@ namespace engine
          }
          it = vec.begin() ;
          // display the first line
-         cout << setw( synopsisIndent ) << " " << lastSynopsis.c_str() 
+         cout << setw( synopsisIndent ) << " " << lastSynopsis.c_str()
               << setw( briefIndent - synopsisLen + 1 ) << " " << *it << endl ;
          for( it++; it != vec.end(); it++ )
          {
@@ -485,7 +485,7 @@ namespace engine
             rc = _getSplitPosition( pb, SPT_BRIEF_SIZE, &offset ) ;
             if ( rc )
                goto error ;
-            // if offset == 0, means we finish going through the whole brief 
+            // if offset == 0, means we finish going through the whole brief
             // and the whole brief has been insert into vec
             if ( 0 == offset )
             {
@@ -513,7 +513,7 @@ namespace engine
                rc = _convertor->convert( UTF8Output[i], clientStr ) ;
                if ( rc )
                {
-                  ossPrintf( "Failed to convert charset of manual, %s:%d"OSS_NEWLINE,
+                  ossPrintf( "Failed to convert charset of manual, %s:%d" OSS_NEWLINE,
                               __FILE__, __LINE__ ) ;
                   goto error ;
                }
@@ -532,7 +532,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptHelp::_getSplitPosition( const CHAR *pos, 
+   INT32 _sptHelp::_getSplitPosition( const CHAR *pos,
                                       INT32 lineLen, INT32 *offset )
    {
       INT32 rc = SDB_OK ;
@@ -574,5 +574,5 @@ namespace engine
       goto done ;
    }
 
-   
+
 } // namespace

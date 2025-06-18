@@ -39,9 +39,9 @@
 #include "ossLatch.hpp"
 #include "clsCatalogAgent.hpp"
 #include <string>
-#include <map>
 #include "../bson/bson.h"
 #include "dmsTaskStatus.hpp"
+#include <map>
 
 using namespace bson ;
 

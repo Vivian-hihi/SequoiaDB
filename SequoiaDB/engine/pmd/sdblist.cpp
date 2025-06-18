@@ -299,7 +299,7 @@ namespace engine
       }
       else
       {
-         ossPrintf( "%s(%s) (%s) %s"OSS_NEWLINE,
+         ossPrintf( "%s(%s) (%s) %s" OSS_NEWLINE,
                     utilDBTypeStr( (SDB_TYPE)node._type ),
                     node._svcname.c_str(), tmpPID,
                     utilDBRoleShortStr( (SDB_ROLE)node._role ) ) ;
@@ -605,7 +605,7 @@ namespace engine
       if ( showLocation )
       {
          // print Location title
-         ossPrintf( "%s"OSS_NEWLINE, PMD_LIST_LOCATION_TITLE ) ;
+         ossPrintf( "%s" OSS_NEWLINE, PMD_LIST_LOCATION_TITLE ) ;
       }
       else if ( showLong )
       {
@@ -650,7 +650,7 @@ namespace engine
             }
             else
             {
-               ossPrintf( "%s (%d)"OSS_NEWLINE, PMDDMN_SVCNAME_DEFAULT,
+               ossPrintf( "%s (%d)" OSS_NEWLINE, PMDDMN_SVCNAME_DEFAULT,
                           procs[ i ]._pid ) ;
             }
          }

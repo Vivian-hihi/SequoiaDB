@@ -34,9 +34,11 @@
 #include "omagent.hpp"
 #include "pmdAsyncSession.hpp"
 #include "netRouteAgent.hpp"
-#include <map>
 #include "../bson/bson.h"
 #include "sptUsrFileCommon.hpp"
+
+#include <map>
+
 using namespace bson ;
 
 namespace engine

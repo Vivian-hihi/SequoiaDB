@@ -17,13 +17,15 @@
    
 *******************************************************************************/
 #include "ossTypes.hpp"
-#include <map>
 #include "createBson.hpp"
 #include "utilBsongen.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
 #include "ossLatch.hpp"
 #include "mthModifier.hpp"
+
+#include <map>
+
 using namespace std;
 
 const UINT32 HASH_SIZE = 100;

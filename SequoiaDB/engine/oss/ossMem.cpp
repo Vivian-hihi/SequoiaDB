@@ -42,10 +42,10 @@
 #include "ossPrimitiveFileOp.hpp"
 #include "filenames.hpp"
 #include "ossVer.h"
+#include "../bson/bson.h"
+
 #include <set>
 #include <map>
-
-#include "../bson/bson.h"
 
 /*
    _ossMemInfoAssit define
@@ -372,7 +372,7 @@ class _ossMemTrackCB
             {
                item._freeInTC += size ;
                ++item._freeInTCTimes ;
-            }            
+            }
          }
          catch ( ... )
          {
@@ -464,8 +464,8 @@ class _ossMemTrackCB
          UINT64 totalSize = 0 ;
          UINT64 totalFreeInTC = 0 ;
          UINT64 totalTimes = 0 ;
-         UINT64 freeInTCTimes = 0 ;         
-         
+         UINT64 freeInTCTimes = 0 ;
+
          UINT64 index = 0 ;
 
          if ( !prefix )

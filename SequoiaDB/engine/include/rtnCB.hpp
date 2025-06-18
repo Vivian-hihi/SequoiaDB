@@ -49,7 +49,6 @@
 #include "sdbInterface.hpp"
 #include "utilConcurrentMap.hpp"
 #include "optAPM.hpp"
-#include <map>
 #include "ossMemPool.hpp"
 #include "rtnLocalTaskMgr.hpp"
 #include "rtnRemoteMessenger.hpp"
@@ -58,6 +57,8 @@
 #include "dmsTaskStatus.hpp"
 #include "rtnUserCache.hpp"
 #include "rtnBackgroundJobBase.hpp"
+
+#include <map>
 
 #define RTN_INIT_TEXT_INDEX_VERSION    -1
 

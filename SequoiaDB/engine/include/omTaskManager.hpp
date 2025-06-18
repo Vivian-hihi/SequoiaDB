@@ -35,8 +35,6 @@
 #include "pmd.hpp"
 #include "dmsCB.hpp"
 #include "omManager.hpp"
-#include <map>
-#include <string>
 
 #include <vector>
 #include <string>
@@ -92,7 +90,7 @@ namespace engine
 
          void              _getOMVersion( string &version ) ;
 
-         INT32             _getSuccessHost( BSONObj &resultInfo, 
+         INT32             _getSuccessHost( BSONObj &resultInfo,
                                             set<string> &successHostSet ) ;
 
       private:
@@ -116,7 +114,7 @@ namespace engine
          virtual INT32     checkUpdateInfo( const BSONObj &updateInfo ) ;
 
       private:
-         INT32             _getSuccessHost( BSONObj &resultInfo, 
+         INT32             _getSuccessHost( BSONObj &resultInfo,
                                             set<string> &successHostSet ) ;
 
       private:
@@ -182,12 +180,12 @@ namespace engine
    public:
       omShrinkBusinessTask( INT64 taskID ) ;
       virtual ~omShrinkBusinessTask() ;
-   
+
    public:
       virtual INT32 finish( BSONObj &resultInfo ) ;
-   
+
       virtual INT32 getType() ;
-   
+
       virtual INT64 getTaskID() ;
 
    private:
@@ -209,12 +207,12 @@ namespace engine
    public:
       omDeployPackageTask( INT64 taskID ) ;
       virtual ~omDeployPackageTask() ;
-   
+
    public:
       virtual INT32 finish( BSONObj &resultInfo ) ;
-   
+
       virtual INT32 getType() ;
-   
+
       virtual INT64 getTaskID() ;
 
    private:
@@ -231,12 +229,12 @@ namespace engine
    public:
       omRestartBusinessTask( INT64 taskID ) ;
       virtual ~omRestartBusinessTask() ;
-   
+
    public:
       virtual INT32 finish( BSONObj &resultInfo ) ;
-   
+
       virtual INT32 getType(){ return OM_TASK_TYPE_RESTART_BUSINESS ; }
-   
+
       virtual INT64 getTaskID(){ return _taskID ; }
 
    private:
@@ -297,32 +295,32 @@ namespace engine
          ~omTaskManager() ;
 
       public:
-         INT32             updateTask( INT64 taskID, 
+         INT32             updateTask( INT64 taskID,
                                        const BSONObj &taskUpdateInfo ) ;
 
-         INT32             queryOneTask( const BSONObj &selector, 
+         INT32             queryOneTask( const BSONObj &selector,
                                          const BSONObj &matcher,
                                          const BSONObj &orderBy,
-                                         const BSONObj &hint , 
+                                         const BSONObj &hint ,
                                          BSONObj &oneTask ) ;
 
-         INT32             queryTasks( const BSONObj &selector, 
-                                       const BSONObj &matcher, 
+         INT32             queryTasks( const BSONObj &selector,
+                                       const BSONObj &matcher,
                                        const BSONObj &orderBy,
-                                       const BSONObj &hint, 
+                                       const BSONObj &hint,
                                        vector< BSONObj >&tasks ) ;
 
       private:
-         INT32 _updateTask( omTaskBase *pTask, INT64 taskID, 
+         INT32 _updateTask( omTaskBase *pTask, INT64 taskID,
                             const BSONObj &taskUpdateInfo,
                             BOOLEAN isFinish ) ;
 
          INT32             _getTaskType( INT64 taskID, INT32 &taskType ) ;
 
-         
 
-         INT32             _getTaskFlag( INT64 taskID, BOOLEAN &existFlag, 
-                                         BOOLEAN &isFinished, 
+
+         INT32             _getTaskFlag( INT64 taskID, BOOLEAN &existFlag,
+                                         BOOLEAN &isFinished,
                                          INT32 &taskType ) ;
    } ;
 

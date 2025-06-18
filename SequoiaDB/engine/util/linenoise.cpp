@@ -91,7 +91,6 @@
  *
  */
 
-#include <string>
 #ifdef _UNICODE
 #undef _UNICODE
 #endif
@@ -101,6 +100,8 @@
 #endif
 
 #include "core.hpp"
+
+#include <string>
 
 #ifndef _WIN32
 #include <termios.h>

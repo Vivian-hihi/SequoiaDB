@@ -19,15 +19,14 @@
 #ifndef STATISTICS_HPP_
 #define STATISTICS_HPP_
 
-#include <map>
-
-#include <boost/thread.hpp>
-
 #include "core.hpp"
 #include "ossLatch.hpp"
 #include "job.hpp"
 #include "ossIO.hpp"
 #include "ossUtil.hpp"
+
+#include <map>
+#include <boost/thread.hpp>
 
 using namespace std;
 

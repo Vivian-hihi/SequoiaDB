@@ -28,7 +28,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <string>
 #include "sptDBRecycleBin.hpp"
 #include "sptDBSnapshotOption.hpp"
 #include "sptDBCursor.hpp"

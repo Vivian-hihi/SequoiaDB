@@ -48,8 +48,9 @@
 #include "rtnRecover.hpp"
 #include "rtnContextLob.hpp"
 #include "../bson/bsonobj.h"
-#include <map>
 #include "clsUtil.hpp"
+
+#include <map>
 
 using namespace std ;
 using namespace bson ;

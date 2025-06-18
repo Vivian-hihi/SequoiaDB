@@ -116,68 +116,68 @@ namespace engine
          ossTimestampToString( commitTm, strTime ) ;
 
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Eye Catcher       : %s"OSS_NEWLINE,
+                              " Eye Catcher       : %s" OSS_NEWLINE,
                               eyeCatcher ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Version           : %d"OSS_NEWLINE,
+                              " Version           : %d" OSS_NEWLINE,
                               header->_version ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Page Size         : %d"OSS_NEWLINE,
+                              " Page Size         : %d" OSS_NEWLINE,
                               header->_pageSize ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Total Size        : %d"OSS_NEWLINE,
+                              " Total Size        : %d" OSS_NEWLINE,
                               header->_storageUnitSize ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " SU Name           : %s"OSS_NEWLINE,
+                              " SU Name           : %s" OSS_NEWLINE,
                               header->_name ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Sequence          : %d"OSS_NEWLINE,
+                              " Sequence          : %d" OSS_NEWLINE,
                               header->_sequence ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Num of Col        : %d"OSS_NEWLINE,
+                              " Num of Col        : %d" OSS_NEWLINE,
                               header->_numMB ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " HWM of Col        : %d"OSS_NEWLINE,
+                              " HWM of Col        : %d" OSS_NEWLINE,
                               header->_MBHWM ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Page Num          : %d"OSS_NEWLINE,
+                              " Page Num          : %d" OSS_NEWLINE,
                               header->_pageNum ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Secret value      : 0x%016lx (%llu)"OSS_NEWLINE,
+                              " Secret value      : 0x%016lx (%llu)" OSS_NEWLINE,
                               header->_secretValue, header->_secretValue ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Lob Page Sz       : %d"OSS_NEWLINE,
+                              " Lob Page Sz       : %d" OSS_NEWLINE,
                               header->_lobdPageSize ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Lob Flag          : %d"OSS_NEWLINE,
+                              " Lob Flag          : %d" OSS_NEWLINE,
                               header->_createLobs ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Commit Flag       : %d"OSS_NEWLINE,
+                              " Commit Flag       : %d" OSS_NEWLINE,
                               header->_commitFlag ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Commit LSN        : 0x%016lx (%lld)"OSS_NEWLINE,
+                              " Commit LSN        : 0x%016lx (%lld)" OSS_NEWLINE,
                               header->_commitLsn, header->_commitLsn ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Commit Time       : %s (%llu)"OSS_NEWLINE,
+                              " Commit Time       : %s (%llu)" OSS_NEWLINE,
                               strTime, header->_commitTime ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Unique ID         : 0x%08x (%u)"OSS_NEWLINE,
+                              " Unique ID         : 0x%08x (%u)" OSS_NEWLINE,
                               header->_csUniqueID, header->_csUniqueID ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Segment Size      : %u"OSS_NEWLINE,
+                              " Segment Size      : %u" OSS_NEWLINE,
                               header->_segmentSize ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " HWM of IdxInnerID : 0x%08x (%u)"OSS_NEWLINE,
+                              " HWM of IdxInnerID : 0x%08x (%u)" OSS_NEWLINE,
                               header->_idxInnerHWM, header->_idxInnerHWM ) ;
 
          ossMillisecondsToString( header->_createTime, strTime ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Create Timestamp  : %s (%llu)"OSS_NEWLINE,
+                              " Create Timestamp  : %s (%llu)" OSS_NEWLINE,
                               strTime, header->_createTime ) ;
 
          ossMillisecondsToString( header->_updateTime, strTime ) ;
          len += ossSnprintf ( outBuf + len, outSize - len,
-                              " Update Timestamp  : %s (%llu)"OSS_NEWLINE,
+                              " Update Timestamp  : %s (%llu)" OSS_NEWLINE,
                               strTime, header->_updateTime ) ;
       }
       len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;

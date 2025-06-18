@@ -38,10 +38,11 @@
 #define OSSUTIL_HPP_
 #include "core.hpp"
 #include "oss.hpp"
+#include "ossUtil.h"
+
 #include <ctime>
 #include <time.h>
 #include <sys/types.h>
-#include "ossUtil.h"
 #include <string>
 #include <map>
 

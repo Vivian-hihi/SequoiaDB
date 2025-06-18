@@ -37,12 +37,12 @@
 #ifndef CLSUTIL_HPP_
 #define CLSUTIL_HPP_
 
-#include <map>
-
 #include "clsDef.hpp"
 #include "netDef.hpp"
 #include "clsBase.hpp"
 #include "msgReplicator.hpp"
+
+#include <map>
 
 using namespace std ;
 

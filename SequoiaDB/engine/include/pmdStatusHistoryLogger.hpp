@@ -49,7 +49,7 @@ namespace engine
       status history logger
    */
    #define PMD_STATUS_LOG_LEN_MAX      ( 64 )
-   #define PMD_STATUS_LOG_HEADER       "pid, time, isPrimary, status"OSS_NEWLINE
+   #define PMD_STATUS_LOG_HEADER       "pid, time, isPrimary, status" OSS_NEWLINE
    #define PMD_STATUS_LOG_HEADER_SIZE  ( sizeof( PMD_STATUS_LOG_HEADER ) - 1 )
    #define PMD_STATUS_LOG_FIELD_NUM    ( 4 )
    #define PMD_STATUS_FILESIZE_LIMIT   ( 2000 * 1024 )
@@ -74,7 +74,7 @@ namespace engine
 
          ossTimestampToString( _time, strTime ) ;
 
-         ossSnprintf( strLog, sizeof( strLog ) - 1, "%d,%s,%d,%s"OSS_NEWLINE,
+         ossSnprintf( strLog, sizeof( strLog ) - 1, "%d,%s,%d,%s" OSS_NEWLINE,
                       _pid,
                       strTime,
                       _primary,

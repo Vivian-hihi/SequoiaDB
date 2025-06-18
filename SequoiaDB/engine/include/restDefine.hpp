@@ -36,11 +36,12 @@
 #define REST_DEFINE_HPP__
 
 #include "core.hpp"
+#include "ossUtil.h"
+
 #include <sys/types.h>
 #include <map>
 #include <vector>
 #include <string>
-#include "ossUtil.h"
 
 enum HTTP_PARSE_COMMAND
 {

@@ -468,7 +468,7 @@ namespace engine
       rc = ossMkdir( dialogPath ) ;
       if ( rc && SDB_FE != rc )
       {
-         ossPrintf( "Create dialog dir[%s] failed, rc: %d"OSS_NEWLINE,
+         ossPrintf( "Create dialog dir[%s] failed, rc: %d" OSS_NEWLINE,
                     dialogPath, rc ) ;
          // not go to error, continue
          rc = SDB_OK ;
