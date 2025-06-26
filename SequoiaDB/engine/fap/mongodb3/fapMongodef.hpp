@@ -92,7 +92,7 @@ struct mongoSessionCtx
    UINT64            eduID ;
    UINT64            maxTimeMS ;
 
-   mongoSessionCtx() : clientInfo(), hasParsedClientInfo( FALSE ) 
+   mongoSessionCtx() : clientInfo(), hasParsedClientInfo( FALSE )
    {
       sessionName = NULL ;
       eduID = 0 ;
@@ -108,7 +108,7 @@ struct mongoSessionCtx
       {
          builder.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
          builder.append( FAP_MONGO_FIELD_NAME_ERRMSG, pErrMsg ) ;
-         builder.append( FAP_MONGO_FIELD_NAME_CODE, errCode ) ;
+         builder.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( errCode ) ) ;
          errorObj = builder.obj() ;
       }
       catch ( std::exception &e )

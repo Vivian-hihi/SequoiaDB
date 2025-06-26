@@ -272,7 +272,7 @@ _mongoErrorObjAssit::_mongoErrorObjAssit()
    {
       BSONObjBuilder berror ;
       berror.append ( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-      berror.append ( FAP_MONGO_FIELD_NAME_CODE, i ) ;
+      berror.append ( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( i ) ) ;
       berror.append ( FAP_MONGO_FIELD_NAME_CODENAME, getErrDesp ( i ) ) ;
       berror.append ( FAP_MONGO_FIELD_NAME_ERRMSG, getErrDesp ( i ) ) ;
       _errorObjsArray[ i + SDB_MAX_ERROR ] = berror.obj() ;
@@ -381,7 +381,7 @@ BSONObj mongoGetErrorBson( INT32 errorCode, const CHAR *pErrMsg )
       {
          BSONObjBuilder berror ;
          berror.append ( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-         berror.append ( FAP_MONGO_FIELD_NAME_CODE, errorCode ) ;
+         berror.append ( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( errorCode ) ) ;
          berror.append ( FAP_MONGO_FIELD_NAME_ERRMSG, pErrMsg ) ;
          return berror.obj() ;
       }
@@ -402,7 +402,7 @@ void mongoBuildErrorBson( BSONObjBuilder &builder, INT32 errorCode,
    try
    {
       builder.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-      builder.append( FAP_MONGO_FIELD_NAME_CODE, errorCode ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( errorCode ) ) ;
 
       if ( !objDetail.isEmpty() )
       {
@@ -622,7 +622,7 @@ INT32 mongoBuildDupkeyErrObj( const BSONObj &sdbErrobj, const CHAR* clFullName,
    try
    {
       builder.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-      builder.append( FAP_MONGO_FIELD_NAME_CODE, SDB_IXM_DUP_KEY ) ;
+      builder.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( SDB_IXM_DUP_KEY ) ) ;
       builder.append( FAP_MONGO_FIELD_NAME_CODENAME, getErrDesp( SDB_IXM_DUP_KEY ) ) ;
 
       ss << getErrDesp( SDB_IXM_DUP_KEY ) ;
@@ -797,6 +797,35 @@ std::string mongoGetNonce()
    std::stringstream ss ;
    ss << std::hex << n ;
    return ss.str() ;
+}
+
+struct _utilFapRCMapItem
+{
+   INT32 sdbRC ;
+   INT32 mongoRC ;
+} ;
+
+static const _utilFapRCMapItem s_Sdb2MongoRCMap[] =
+{
+   { SDB_DMS_CS_NOTEXIST, 26 },
+   { SDB_DMS_NOTEXIST, 26 },
+   { SDB_AUTH_AUTHORITY_FORBIDDEN, 18 },
+   { SDB_AUTH_INCOMPATIBLE, 18 },
+} ;
+
+INT32 utilSdbRC2MongoRC( INT32 sdbRC )
+{
+   if ( sdbRC < 0 )
+   {
+      for ( UINT32 i = 0 ; i < sizeof( s_Sdb2MongoRCMap )/sizeof( s_Sdb2MongoRCMap[0] ) ; ++i )
+      {
+         if ( s_Sdb2MongoRCMap[i].sdbRC == sdbRC )
+         {
+            return s_Sdb2MongoRCMap[i].mongoRC ;
+         }
+      }
+   }
+   return sdbRC ;
 }
 
 }

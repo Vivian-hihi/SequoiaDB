@@ -2888,7 +2888,7 @@ INT32 _mongoQueryCommand::buildMongoReply( const MsgOpReply &sdbReply,
                            resObj.getStringField(
                            FAP_MONGO_FIELD_NAME_ERRMSG ) <<
                            FAP_MONGO_FIELD_NAME_CODE <<
-                           resObj.getIntField( FAP_MONGO_FIELD_NAME_CODE ) <<
+                           utilSdbRC2MongoRC( resObj.getIntField( FAP_MONGO_FIELD_NAME_CODE ) ) <<
                            FAP_MONGO_FIELD_NAME_CODENAME <<
                            resObj.getStringField( FAP_MONGO_FIELD_NAME_CODENAME ) ) ;
          }
@@ -4513,7 +4513,7 @@ INT32 _mongoAggregateCommand::_convertAggrProject( BSONObj& projectObj,
          builder.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
          builder.append( FAP_MONGO_FIELD_NAME_ERRMSG,
                          "Exclusion fields is not supported" ) ;
-         builder.append( FAP_MONGO_FIELD_NAME_CODE, rc ) ;
+         builder.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( rc ) ) ;
          builder.append( FAP_MONGO_FIELD_NAME_CODENAME, getErrDesp( rc ) ) ;
          errorObj = builder.obj() ;
          goto error ;
@@ -5174,7 +5174,7 @@ INT32 _mongoDropCLCommand::buildMongoReply( const MsgOpReply &sdbReply,
                 SDB_DMS_CS_NOTEXIST == sdbReply.flags )
       {
          BSONObj newError = BSON( FAP_MONGO_FIELD_NAME_OK << 0 <<
-                                  FAP_MONGO_FIELD_NAME_CODE << sdbReply.flags <<
+                                  FAP_MONGO_FIELD_NAME_CODE << utilSdbRC2MongoRC( sdbReply.flags ) <<
                                   FAP_MONGO_FIELD_NAME_CODENAME << getErrDesp( sdbReply.flags ) <<
                                   FAP_MONGO_FIELD_NAME_ERRMSG << "ns not found" ) ;
          bodyBuf = engine::rtnContextBuf( newError ) ;
@@ -6955,7 +6955,7 @@ INT32 _mongoSaslStartCommand::buildMongoReply( const MsgOpReply &sdbReply,
       if ( replyObj.isEmpty() )
       {
          bob.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-         bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
+         bob.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( 18 ) ) ;
          bob.append( FAP_MONGO_FIELD_NAME_ERRMSG,
                      "Authentication has been disabled, "
                      "you don't need to execute 'db.auth()' " ) ;
@@ -6987,7 +6987,7 @@ INT32 _mongoSaslStartCommand::buildMongoReply( const MsgOpReply &sdbReply,
          else if ( SDB_AUTH_AUTHORITY_FORBIDDEN == sdbReply.flags )
          {
             bob.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-            bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
+            bob.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( sdbReply.flags ) ) ;
             bob.append( FAP_MONGO_FIELD_NAME_ERRMSG, "Authentication failed." ) ;
             rebuildBuf = TRUE ;
             needSetError = TRUE ;
@@ -6995,7 +6995,7 @@ INT32 _mongoSaslStartCommand::buildMongoReply( const MsgOpReply &sdbReply,
          else if ( SDB_AUTH_INCOMPATIBLE == sdbReply.flags )
          {
             bob.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-            bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
+            bob.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( sdbReply.flags ) ) ;
             bob.append( FAP_MONGO_FIELD_NAME_ERRMSG,
                         getErrDesp( SDB_AUTH_INCOMPATIBLE ) ) ;
             rebuildBuf = TRUE ;
@@ -7238,7 +7238,7 @@ INT32 _mongoSaslContinueCommand::buildMongoReply( const MsgOpReply &sdbReply,
          else if ( SDB_AUTH_AUTHORITY_FORBIDDEN == sdbReply.flags )
          {
             bob.append( FAP_MONGO_FIELD_NAME_OK, 0 ) ;
-            bob.append( FAP_MONGO_FIELD_NAME_CODE, 18 ) ;
+            bob.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( sdbReply.flags ) ) ;
             bob.append( FAP_MONGO_FIELD_NAME_ERRMSG, "Authentication failed." ) ;
             rebuildBuf = TRUE ;
             needSetError = TRUE ;
@@ -7905,7 +7905,7 @@ INT32 _mongoGetLastErrorCommand::buildMongoReply( const MsgOpReply &sdbReply,
       else
       {
          bob.append( FAP_MONGO_FIELD_NAME_OK, 1 ) ;
-         bob.append( FAP_MONGO_FIELD_NAME_CODE, errCode ) ;
+         bob.append( FAP_MONGO_FIELD_NAME_CODE, utilSdbRC2MongoRC( errCode ) ) ;
          bob.append( FAP_MONGO_FIELD_NAME_CODENAME,
                  _errorInfoObj.getStringField( FAP_MONGO_FIELD_NAME_CODENAME ) ) ;
          bob.append( FAP_MONGO_FIELD_NAME_ERR,
