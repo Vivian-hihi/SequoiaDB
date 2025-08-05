@@ -35,10 +35,10 @@
 #ifndef OSSPATH_HPP__
 #define OSSPATH_HPP__
 
+#include "oss.h"
 #include <string>
 #include <map>
 #include <vector>
-#include "oss.h"
 
 using namespace std ;
 

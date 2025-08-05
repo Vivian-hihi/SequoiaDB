@@ -28,8 +28,8 @@
    Last Changed =
 
 *******************************************************************************/
-#include <string>
 #include "sptDBDC.hpp"
+#include <string>
 using namespace std ;
 
 namespace engine

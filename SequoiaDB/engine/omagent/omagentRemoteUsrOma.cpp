@@ -269,7 +269,7 @@ namespace engine
                }
             }
 
-            _jobList.push_back( make_pair<EDUID,string>( eduID, svcname ) );
+            _jobList.push_back( pair<EDUID,string>( eduID, svcname ) );
          }
       }
 
