@@ -159,7 +159,7 @@ namespace engine
             if ( matcher == "" )
             {
                ossPrintf( "%d methods related to method \"%s\", please "
-                          "fill in the full name: "OSS_NEWLINE,
+                          "fill in the full name: " OSS_NEWLINE,
                           (INT32)v_tmp.size(), fuzzyFuncName.c_str() );
             }
             else
@@ -167,20 +167,20 @@ namespace engine
                if ( isInstance )
                {
                   ossPrintf( "%d methods related to method \"%s\" in current "
-                             "object, please fill in the full name: "OSS_NEWLINE,
+                             "object, please fill in the full name: " OSS_NEWLINE,
                              (INT32)v_tmp.size(), fuzzyFuncName.c_str() );
                }
                else
                {
                   ossPrintf( "%d methods related to method \"%s\" in class "
-                             "%s, please fill in the full name: "OSS_NEWLINE,
+                             "%s, please fill in the full name: " OSS_NEWLINE,
                              (INT32)v_tmp.size(), fuzzyFuncName.c_str(),
                              matcher.c_str() );
                }
             }
             for ( it = v_tmp.begin(); it != v_tmp.end(); it++ )
             {
-               ossPrintf( "    %s"OSS_NEWLINE, (*it).c_str() );
+               ossPrintf( "    %s" OSS_NEWLINE, (*it).c_str() );
             }
             goto done ;
          }
@@ -394,7 +394,7 @@ namespace engine
       // check arguments
       if ( synopsis.size() < 1 )
       {
-         ossPrintf( "Invalid argument, %s:%d"OSS_NEWLINE,
+         ossPrintf( "Invalid argument, %s:%d" OSS_NEWLINE,
                      __FILE__, __LINE__ ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -474,7 +474,7 @@ namespace engine
          // check argument
          if ( !pb )
          {
-            ossPrintf( "Invalid argument, %s:%d"OSS_NEWLINE,
+            ossPrintf( "Invalid argument, %s:%d" OSS_NEWLINE,
                         __FILE__, __LINE__ ) ;
 
             rc = SDB_INVALIDARG ;
@@ -543,7 +543,7 @@ namespace engine
       if ( !pos || lineLen <= 0 )
       {
          rc = SDB_INVALIDARG ;
-         ossPrintf( "Invalid argument, %s:%d"OSS_NEWLINE,
+         ossPrintf( "Invalid argument, %s:%d" OSS_NEWLINE,
                      __FILE__, __LINE__ ) ;
          goto error ;
       }

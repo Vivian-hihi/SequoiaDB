@@ -1090,8 +1090,8 @@ namespace engine
                        "changed to %s:%s", tmpClsName.c_str(), tmpBusName.c_str(),
                        clusterName.c_str(), businessName.c_str() ) ;
                BSONObj updator = BSON( "$set" << BSON(
-                 FIELD_NAME_DATACENTER"."FIELD_NAME_CLUSTERNAME << clusterName <<
-                 FIELD_NAME_DATACENTER"."FIELD_NAME_BUSINESSNAME << businessName )
+                 FIELD_NAME_DATACENTER "." FIELD_NAME_CLUSTERNAME << clusterName <<
+                 FIELD_NAME_DATACENTER "." FIELD_NAME_BUSINESSNAME << businessName )
                                       ) ;
                BSONObj matcher = BSON( FIELD_NAME_TYPE <<
                                        CAT_BASE_TYPE_GLOBAL_STR ) ;

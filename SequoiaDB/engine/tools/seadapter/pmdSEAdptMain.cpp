@@ -170,7 +170,7 @@ namespace seadapter
       }
       else if ( rc )
       {
-         ossPrintf( "Failed resolving arguments(error=%d), exit"OSS_NEWLINE,
+         ossPrintf( "Failed resolving arguments(error=%d), exit" OSS_NEWLINE,
                     rc ) ;
          goto error ;
       }
@@ -178,7 +178,7 @@ namespace seadapter
       rc = buildDialogPath( dialogPath, OSS_MAX_PATHSIZE + 1 ) ;
       if ( rc )
       {
-         ossPrintf( "Failed to build dialog path(error=%d), exit"OSS_NEWLINE,
+         ossPrintf( "Failed to build dialog path(error=%d), exit" OSS_NEWLINE,
                     rc ) ;
          goto error ;
       }
@@ -191,14 +191,14 @@ namespace seadapter
                            SEADPT_LOCK_FILE_NAME ) ;
          if ( rc )
          {
-            ossPrintf( "Build path for lock file failed[%d]"OSS_NEWLINE, rc ) ;
+            ossPrintf( "Build path for lock file failed[%d]" OSS_NEWLINE, rc ) ;
             goto error ;
          }
 
          rc = procMutex.init( "sdbseadapter", (void *)lockFilePath ) ;
          if ( rc )
          {
-            ossPrintf( "Init process mutex failed[ %d ]"OSS_NEWLINE, rc ) ;
+            ossPrintf( "Init process mutex failed[ %d ]" OSS_NEWLINE, rc ) ;
             goto error ;
          }
 
@@ -217,7 +217,7 @@ namespace seadapter
       if ( rc )
       {
          ossPrintf( "Failed to build dialog path failed(error=%d), "
-                    "exit"OSS_NEWLINE, rc ) ;
+                    "exit" OSS_NEWLINE, rc ) ;
          goto error ;
       }
 

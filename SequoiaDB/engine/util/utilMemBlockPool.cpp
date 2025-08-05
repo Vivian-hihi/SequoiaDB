@@ -1378,7 +1378,7 @@ namespace engine
          shield.doNothing() ;
 
          ossScopedLock lock( &s_dumpLatch ) ;
-   
+
          // open file
          trapFile.Open ( fileName ) ;
          if ( !trapFile.isValid() )

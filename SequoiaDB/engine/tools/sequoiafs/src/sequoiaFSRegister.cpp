@@ -113,7 +113,7 @@ namespace sequoiafs
       if(SDB_OK != rc)
       {
          PD_LOG( PDERROR, "Failed to init shard session manager, rc=%d", rc ) ;
-         ossPrintf("Failed to init shard session manager(rc=%d), exit."OSS_NEWLINE, rc);
+         ossPrintf("Failed to init shard session manager(rc=%d), exit." OSS_NEWLINE, rc);
          goto error;
       }
 
@@ -121,7 +121,7 @@ namespace sequoiafs
       if(SDB_OK != rc)
       {
          PD_LOG( PDERROR, "Failed to activeEDU, rc=%d", rc ) ;
-         ossPrintf("Failed to activeEDU(rc=%d), exit."OSS_NEWLINE, rc);
+         ossPrintf("Failed to activeEDU(rc=%d), exit." OSS_NEWLINE, rc);
          goto error;
       }
 

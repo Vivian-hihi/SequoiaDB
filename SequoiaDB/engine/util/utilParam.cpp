@@ -656,7 +656,7 @@ namespace engine
       rc = ossGetEWD( rootPath, OSS_MAX_PATHSIZE ) ;
       if ( rc )
       {
-         ossPrintf( "Error: Failed to get module self path: %d"OSS_NEWLINE,
+         ossPrintf( "Error: Failed to get module self path: %d" OSS_NEWLINE,
                     rc ) ;
          goto error ;
       }
@@ -688,7 +688,7 @@ namespace engine
             rc = SDB_OK ;
             goto done ;
          }
-         ossPrintf( "Error: Failed to read config from file[%s]: %d"OSS_NEWLINE,
+         ossPrintf( "Error: Failed to read config from file[%s]: %d" OSS_NEWLINE,
                     confFileName, rc ) ;
          goto error ;
       }
@@ -756,7 +756,7 @@ namespace engine
          if ( !hasGot )
          {
             rc = SDB_SYS ;
-            ossPrintf( "Error: Failed to get ulimit[%s]"OSS_NEWLINE,
+            ossPrintf( "Error: Failed to get ulimit[%s]" OSS_NEWLINE,
                        limitStr.c_str() ) ;
             goto error ;
          }

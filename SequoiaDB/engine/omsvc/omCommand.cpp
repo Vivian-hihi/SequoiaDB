@@ -609,7 +609,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "business[%s] is exist "
-                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             "in task[" OSS_LL_PRINT_FORMAT "]",
                              _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -1277,7 +1277,7 @@ namespace engine
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "business[%s] is exist "
-                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             "in task[" OSS_LL_PRINT_FORMAT "]",
                              _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -4344,7 +4344,7 @@ checking system firewall for blocked ports" ) ;
          rc = _saveTask( taskID, taskInfo, resultInfo ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "fail to save task:taskID="OSS_LL_PRINT_FORMAT
+            PD_LOG( PDERROR, "fail to save task:taskID=" OSS_LL_PRINT_FORMAT 
                     ",rc=%d", taskID, rc ) ;
             _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
             _sendErrorRes2Web( rc, _errorDetail ) ;
@@ -4394,7 +4394,7 @@ checking system firewall for blocked ports" ) ;
       if ( SDB_OK != rc )
       {
          _removeTask( taskID ) ;
-         PD_LOG( PDERROR, "fail to notify task:taskID="OSS_LL_PRINT_FORMAT
+         PD_LOG( PDERROR, "fail to notify task:taskID=" OSS_LL_PRINT_FORMAT
                  ",rc=%d", taskID, rc ) ;
          _errorDetail = omGetMyEDUInfoSafe( EDU_INFO_ERROR ) ;
          _sendErrorRes2Web( rc, _errorDetail ) ;
@@ -5340,7 +5340,7 @@ checking system firewall for blocked ports" ) ;
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "business[%s] is exist "
-                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             "in task[" OSS_LL_PRINT_FORMAT "]",
                              _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -5886,7 +5886,7 @@ checking system firewall for blocked ports" ) ;
       rc = _ssqlGetMore( taskID, flag, result ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "ssql get more failed:taskID="OSS_LL_PRINT_FORMAT
+         PD_LOG( PDERROR, "ssql get more failed:taskID=" OSS_LL_PRINT_FORMAT 
                  "rc=%d", taskID, rc ) ;
          goto error ;
       }
@@ -5904,7 +5904,7 @@ checking system firewall for blocked ports" ) ;
                           << OM_TASKINFO_FIELD_DETAIL << errorDetail
                           << OM_TASKINFO_FIELD_PROGRESS << 100 ) ;
          _updateSsqlTask( taskID, taskInfo ) ;
-         PD_LOG_MSG( PDERROR, "ssql get more failed:taskID="OSS_LL_PRINT_FORMAT
+         PD_LOG_MSG( PDERROR, "ssql get more failed:taskID=" OSS_LL_PRINT_FORMAT
                      ",rc=%d,detail=%s", taskID, flag, errorDetail.c_str() ) ;
          goto error ;
       }
@@ -5946,7 +5946,7 @@ checking system firewall for blocked ports" ) ;
                            hint, 0, 0, -1, tasks ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "query table failed:task="OSS_LL_PRINT_FORMAT
+            PD_LOG( PDERROR, "query table failed:task=" OSS_LL_PRINT_FORMAT 
                     ",rc=%d", taskID, rc ) ;
             goto error ;
          }
@@ -5954,7 +5954,7 @@ checking system firewall for blocked ports" ) ;
          if ( tasks.size() != 1 )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "query task failed:task="OSS_LL_PRINT_FORMAT
+            PD_LOG( PDERROR, "query task failed:task=" OSS_LL_PRINT_FORMAT 
                     ",rc=%d", taskID, rc ) ;
             goto error ;
          }
@@ -7176,7 +7176,7 @@ checking system firewall for blocked ports" ) ;
          {
             rc = SDB_INVALIDARG ;
             _errorMsg.setError( TRUE, "host[%s] is exist "
-                                "in task["OSS_LL_PRINT_FORMAT"]",
+                                "in task[" OSS_LL_PRINT_FORMAT "]",
                                 hostName.c_str(), taskID ) ;
             PD_LOG( PDERROR, _errorMsg.getError() ) ;
             goto error ;
@@ -9726,7 +9726,7 @@ checking system firewall for blocked ports" ) ;
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "business[%s] is exist "
-                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             "in task[" OSS_LL_PRINT_FORMAT "]",
                              _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
@@ -9877,7 +9877,7 @@ checking system firewall for blocked ports" ) ;
       else if ( records.empty() )
       {
          rc = SDB_OM_TASK_NOT_EXIST ;
-         PD_LOG_MSG( PDERROR, "task does not exist:taskID="OSS_LL_PRINT_FORMAT,
+         PD_LOG_MSG( PDERROR, "task does not exist:taskID=" OSS_LL_PRINT_FORMAT,
                      _taskID ) ;
          goto error ;
       }
@@ -9889,7 +9889,7 @@ checking system firewall for blocked ports" ) ;
          if ( OM_TASK_STATUS_FINISH == status ||
               OM_TASK_STATUS_CANCEL == status )
          {
-            PD_LOG( PDEVENT, "task is finish:taskID="OSS_LL_PRINT_FORMAT
+            PD_LOG( PDEVENT, "task is finish:taskID=" OSS_LL_PRINT_FORMAT
                     ",status=%d", _taskID, status ) ;
             _isFinished = TRUE ;
          }
@@ -10256,7 +10256,7 @@ checking system firewall for blocked ports" ) ;
          else
          {
             CHAR pluginPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
-            string realPluginPath = ".."OSS_FILE_SEP"plugins"OSS_FILE_SEP ;
+            string realPluginPath = ".." OSS_FILE_SEP "plugins" OSS_FILE_SEP ;
             string pluginRootPath ;
             BSONObj pluginInfo ;
 
@@ -11490,7 +11490,7 @@ checking system firewall for blocked ports" ) ;
       {
          rc = SDB_INVALIDARG ;
          _errorMsg.setError( TRUE, "business[%s] is exist "
-                             "in task["OSS_LL_PRINT_FORMAT"]",
+                             "in task[" OSS_LL_PRINT_FORMAT "]",
                              _businessName.c_str(), taskID ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;

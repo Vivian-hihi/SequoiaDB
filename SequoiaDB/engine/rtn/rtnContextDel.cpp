@@ -286,12 +286,12 @@ namespace engine
          rc = _pTransCB->transLockTryZ( cb, _eventItem._suLID,
                                         DMS_INVALID_MBID, NULL, &lockConflict ) ;
          PD_RC_CHECK( rc, PDERROR,
-                      "Get transaction-lock of CS(%s) failed(rc=%d)"OSS_NEWLINE
-                      "Conflict( representative ):"OSS_NEWLINE
-                      "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE
-                      "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE,
+                      "Get transaction-lock of CS(%s) failed(rc=%d)" OSS_NEWLINE
+                      "Conflict( representative ):" OSS_NEWLINE
+                      "   EDUID:  %llu" OSS_NEWLINE
+                      "   TID:    %u" OSS_NEWLINE
+                      "   LockId: %s" OSS_NEWLINE
+                      "   Mode:   %s" OSS_NEWLINE,
                       pCollectionSpaceName, rc,
                       lockConflict._eduID,
                       lockConflict._tid,
@@ -474,11 +474,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection(%s) failed(rc=%d)"
                       OSS_NEWLINE
-                      "Conflict( representative ):"OSS_NEWLINE
-                      "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE
-                      "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE,
+                      "Conflict( representative ):" OSS_NEWLINE
+                      "   EDUID:  %llu" OSS_NEWLINE
+                      "   TID:    %u" OSS_NEWLINE
+                      "   LockId: %s" OSS_NEWLINE
+                      "   Mode:   %s" OSS_NEWLINE,
                       pCollectionName, rc,
                       lockConflict._eduID,
                       lockConflict._tid,
@@ -1374,12 +1374,12 @@ namespace engine
                                            NULL, &lockConflict ) ;
          }
          PD_RC_CHECK( rc, PDERROR,
-                      "Get transaction-lock of CS[%s] failed, rc: %d"OSS_NEWLINE
-                      "Conflict( representative ):"OSS_NEWLINE
-                      "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE
-                      "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE,
+                      "Get transaction-lock of CS[%s] failed, rc: %d" OSS_NEWLINE
+                      "Conflict( representative ):" OSS_NEWLINE
+                      "   EDUID:  %llu" OSS_NEWLINE
+                      "   TID:    %u" OSS_NEWLINE
+                      "   LockId: %s" OSS_NEWLINE
+                      "   Mode:   %s" OSS_NEWLINE,
                       pCSName, rc,
                       lockConflict._eduID,
                       lockConflict._tid,
@@ -1902,11 +1902,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection[%s] failed, rc: %d"
                       OSS_NEWLINE
-                      "Conflict( representative ):"OSS_NEWLINE
-                      "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE
-                      "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE,
+                      "Conflict( representative ):" OSS_NEWLINE
+                      "   EDUID:  %llu" OSS_NEWLINE
+                      "   TID:    %u" OSS_NEWLINE
+                      "   LockId: %s" OSS_NEWLINE
+                      "   Mode:   %s" OSS_NEWLINE,
                       _clFullName, rc,
                       lockConflict._eduID,
                       lockConflict._tid,
@@ -2205,11 +2205,11 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR,
                       "Get transaction-lock of collection(%s) failed(rc=%d)"
                       OSS_NEWLINE
-                      "Conflict( representative ):"OSS_NEWLINE
-                      "   EDUID:  %llu"OSS_NEWLINE
-                      "   TID:    %u"OSS_NEWLINE
-                      "   LockId: %s"OSS_NEWLINE
-                      "   Mode:   %s"OSS_NEWLINE,
+                      "Conflict( representative ):" OSS_NEWLINE
+                      "   EDUID:  %llu" OSS_NEWLINE
+                      "   TID:    %u" OSS_NEWLINE
+                      "   LockId: %s" OSS_NEWLINE
+                      "   Mode:   %s" OSS_NEWLINE,
                       pCollectionName, rc,
                       lockConflict._eduID,
                       lockConflict._tid,

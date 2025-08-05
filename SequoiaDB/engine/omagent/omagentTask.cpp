@@ -8707,7 +8707,7 @@ namespace engine
          if ( SDB_OK != _saveRC )
          {
             rc = _saveRC ;
-            PD_LOG_MSG( PDERROR, "task is failed!:taskID="OSS_LL_PRINT_FORMAT
+            PD_LOG_MSG( PDERROR, "task is failed!:taskID=" OSS_LL_PRINT_FORMAT
                         ",rc=%d,error=%s", _taskID, rc, _errorDetail.c_str() ) ;
             goto error ;
          }
@@ -8770,7 +8770,7 @@ namespace engine
       {
          if ( cb->isInterrupted() )
          {
-            PD_LOG( PDERROR, "task is interrupted!:taskID="OSS_LL_PRINT_FORMAT,
+            PD_LOG( PDERROR, "task is interrupted!:taskID=" OSS_LL_PRINT_FORMAT,
                     _taskID ) ;
             rc = SDB_INTERRUPT ;
             goto error ;
@@ -9094,7 +9094,7 @@ namespace engine
             if ( SDB_OK != rc )
             {
                PD_LOG_MSG( PDERROR, "read data from pipe file failed:file=%s,"
-                           "rc=%d,task="OSS_LL_PRINT_FORMAT, pipeFile.c_str(), 
+                           "rc=%d,task=" OSS_LL_PRINT_FORMAT, pipeFile.c_str(), 
                            rc, _taskID ) ;
                goto error ;
             }

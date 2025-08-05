@@ -117,7 +117,7 @@ INT32 sequoiaFSMCS::_mcsInitDataSource(sequoiafsMcsOptionMgr *optionMgr)
    rc = _ds.init( coordHostPort, conf);
    if (SDB_OK != rc)
    {
-      ossPrintf("Fail to init sdbDataSouce, rc=%d"OSS_NEWLINE, rc);
+      ossPrintf("Fail to init sdbDataSouce, rc=%d" OSS_NEWLINE, rc);
       goto error;
    }
    
@@ -137,7 +137,7 @@ INT32 sequoiaFSMCS::_openPdLog()
    rc = buildDialogPath(diaglogPath, _optionMgr.getDiaglogPath(), OSS_MAX_PATHSIZE + 1);
    if(SDB_OK != rc)
    {
-      ossPrintf("Failed to build dialog path(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to build dialog path(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -145,7 +145,7 @@ INT32 sequoiaFSMCS::_openPdLog()
                             SDB_SEQUOIAFS_MCS_LOG_FILE_NAME);
    if(rc != SDB_OK)
    {
-      ossPrintf("Failed to build dialog path(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to build dialog path(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
    
@@ -368,7 +368,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    rc = ossGetHostName( _hostName, OSS_MAX_HOSTNAME ) ;
    if(SDB_OK != rc)
    {
-      ossPrintf("Failed to get hostName. rc=%d, exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to get hostName. rc=%d, exit." OSS_NEWLINE, rc);
       goto error;
    }
    
@@ -381,7 +381,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    }
    else if(SDB_OK != rc)
    {
-      ossPrintf("Failed to resolving arguments(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to resolving arguments(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -389,7 +389,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    rc = _openPdLog();
    if(SDB_OK != rc)
    {
-      ossPrintf("Failed to openPdLog, rc=%d, exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to openPdLog, rc=%d, exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -398,7 +398,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(SDB_OK != rc)
    {
       PD_LOG( PDERROR, "Failed to init connection pool, rc=%d", rc ) ;
-      ossPrintf("Failed to init connection pool(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to init connection pool(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -408,7 +408,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(NULL == _agent)
    {
       PD_LOG( PDERROR, "Allocate route agent failed" ) ;
-      ossPrintf("Allocate route agent failed. exit."OSS_NEWLINE);
+      ossPrintf("Allocate route agent failed. exit." OSS_NEWLINE);
       rc = SDB_OOM ;
       goto error ;
    }
@@ -417,7 +417,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(SDB_OK != rc)
    {
       PD_LOG( PDERROR, "Failed to updateRoute, rc=%d", rc ) ;
-      ossPrintf("Failed to updateRoute(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to updateRoute(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -425,7 +425,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(SDB_OK != rc)
    {
       PD_LOG( PDERROR, "Failed to listen on port[%s], rc=%d", _port, rc ) ;
-      ossPrintf("Failed to listen on port[%s](rc=%d), exit."OSS_NEWLINE, _port, rc);
+      ossPrintf("Failed to listen on port[%s](rc=%d), exit." OSS_NEWLINE, _port, rc);
       goto error;
    }
 
@@ -434,7 +434,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if ( !_mcsTimer ) //TODO:这个实现的作用
    {
       PD_LOG( PDERROR, "Allocate shard timer handler failed" ) ;
-      ossPrintf("Allocate shard timer handler failed. exit."OSS_NEWLINE);
+      ossPrintf("Allocate shard timer handler failed. exit." OSS_NEWLINE);
       rc = SDB_OOM ;
       goto error ;
    }
@@ -443,7 +443,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(SDB_OK != rc) //TODO:这个实现的作用
    {
       PD_LOG( PDERROR, "Failed to init shard session manager, rc=%d", rc ) ;
-      ossPrintf("Failed to init shard session manager(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to init shard session manager(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -451,7 +451,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(SDB_OK != rc)
    {
       PD_LOG( PDERROR, "Failed to activeEDU, rc=%d", rc ) ;
-      ossPrintf("Failed to activeEDU(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to activeEDU(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
 
@@ -460,7 +460,7 @@ INT32 sequoiaFSMCS::mcsThreadMain( INT32 argc, CHAR** argv )
    if(SDB_OK != rc)
    {
       PD_LOG( PDERROR, "Failed to init register, rc=%d", rc ) ;
-      ossPrintf("Failed to init register(rc=%d), exit."OSS_NEWLINE, rc);
+      ossPrintf("Failed to init register(rc=%d), exit." OSS_NEWLINE, rc);
       goto error;
    }
    

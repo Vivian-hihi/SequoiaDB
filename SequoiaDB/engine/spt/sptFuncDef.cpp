@@ -64,14 +64,14 @@ namespace engine
       rc = container.init() ;
       if ( rc )
       {
-         ossPrintf( "Failed to init container, rc: %d"OSS_NEWLINE, rc ) ;
+         ossPrintf( "Failed to init container, rc: %d" OSS_NEWLINE, rc ) ;
          goto error ;
       }
       scope = container.newScope() ;
       if ( !scope )
       {
          rc = SDB_SYS ;
-         ossPrintf( "Failed to new scope in container, rc: %d"OSS_NEWLINE, rc ) ;
+         ossPrintf( "Failed to new scope in container, rc: %d" OSS_NEWLINE, rc ) ;
          goto error ;
 
       }
@@ -90,7 +90,7 @@ namespace engine
          if ( rc )
          {
             ossPrintf( "Load the functions of class[%s] failed, "
-                       "rc: %d"OSS_NEWLINE, className.c_str(), rc ) ;
+                       "rc: %d" OSS_NEWLINE, className.c_str(), rc ) ;
             goto error ;
          }
       }

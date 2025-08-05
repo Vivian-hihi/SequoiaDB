@@ -686,7 +686,7 @@ namespace engine
             BSONObj objOpt = buildOpt.obj() ;
             if ( !objOpt.isEmpty() )
             {
-               BSONObjBuilder sub( build.subobjStart( "$"FIELD_NAME_OPTIONS )  ) ;
+               BSONObjBuilder sub( build.subobjStart( "$" FIELD_NAME_OPTIONS )  ) ;
                sub.appendElements( objOpt ) ;
                sub.done() ;
             }

@@ -545,7 +545,7 @@ namespace engine
          if ( _maxNumOfObjs > 0 )
          {
             UINT32 segmentNum = 0 ;
-   
+
             if ( _maxNumOfObjs < _delta )
             {
                _maxNumOfObjs = _delta ;

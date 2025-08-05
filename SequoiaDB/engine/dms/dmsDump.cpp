@@ -88,7 +88,7 @@ namespace engine
          goto exit ;
       }
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "Storage Unit Header Dump:"OSS_NEWLINE ) ;
+                           "Storage Unit Header Dump:" OSS_NEWLINE ) ;
 
       ossMemcpy ( eyeCatcher, header->_eyeCatcher, DMS_HEADER_EYECATCHER_LEN ) ;
       pageSize = header->_pageSize ;
@@ -812,13 +812,13 @@ namespace engine
          dmsCappedCLOptions *options =
             (dmsCappedCLOptions *)(inBuf + DMS_OPTEXTENT_HEADER_SZ) ;
          len += ossSnprintf( outBuf + len, outSize - len,
-                             "Extend option detail:"OSS_NEWLINE ) ;
+                             "Extend option detail:" OSS_NEWLINE ) ;
          len += ossSnprintf( outBuf + len, outSize - len,
-                             "   Size: %lld"OSS_NEWLINE, options->_maxSize ) ;
+                             "   Size: %lld" OSS_NEWLINE, options->_maxSize ) ;
          len += ossSnprintf( outBuf + len, outSize - len,
-                             "   Max: %lld"OSS_NEWLINE, options->_maxRecNum ) ;
+                             "   Max: %lld" OSS_NEWLINE, options->_maxRecNum ) ;
          len += ossSnprintf( outBuf + len, outSize - len,
-                             "   Overwrite: %s"OSS_NEWLINE,
+                             "   Overwrite: %s" OSS_NEWLINE,
                              (options->_overwrite) ? "true" : "false" ) ;
       }
 
@@ -927,7 +927,7 @@ namespace engine
       }
 
       len += ossSnprintf( outBuf + len, outSize - len,
-                          " ExtentId: 0x%08x (%d)"OSS_NEWLINE,
+                          " ExtentId: 0x%08x (%d)" OSS_NEWLINE,
                           extID, extID ) ;
       if ( DMS_SU_DMP_OPT_HEX & options )
       {
@@ -1197,7 +1197,7 @@ namespace engine
                            "    Record Count : %u" OSS_NEWLINE,
                            extent->_recCount ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    First Record : 0x%08x (%d)"OSS_NEWLINE,
+                           "    First Record : 0x%08x (%d)" OSS_NEWLINE,
                            extent->_firstRecordOffset,
                            extent->_firstRecordOffset ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
@@ -1850,35 +1850,35 @@ namespace engine
       }
 
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Eye Catcher  : %c%c"OSS_NEWLINE,
+                           "    Eye Catcher  : %c%c" OSS_NEWLINE,
                            header->_eyeCatcher[0], header->_eyeCatcher[1] ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Total Keys   : %u"OSS_NEWLINE,
+                           "    Total Keys   : %u" OSS_NEWLINE,
                            header->_totalKeyNodeNum ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    CollectionID : %u"OSS_NEWLINE,
+                           "    CollectionID : %u" OSS_NEWLINE,
                            header->_mbID ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Flag         : 0x%02x (%s)"OSS_NEWLINE,
+                           "    Flag         : 0x%02x (%s)" OSS_NEWLINE,
                            header->_flag, header->_flag==DMS_EXTENT_FLAG_INUSE ?
                            "InUse" : "Free" ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Version      : %d"OSS_NEWLINE,
+                           "    Version      : %d" OSS_NEWLINE,
                            header->_version ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Parent Ext   : 0x%08x (%d)%s"OSS_NEWLINE,
+                           "    Parent Ext   : 0x%08x (%d)%s" OSS_NEWLINE,
                            header->_parentExtentID , header->_parentExtentID,
                            DMS_INVALID_EXTENT == header->_parentExtentID ?
                            " (root)":"" ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Free Offset  : 0x%08x (%d)"OSS_NEWLINE,
+                           "    Free Offset  : 0x%08x (%d)" OSS_NEWLINE,
                            header->_beginFreeOffset,
                            header->_beginFreeOffset ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Total Free   : 0x%08x (%d)"OSS_NEWLINE,
+                           "    Total Free   : 0x%08x (%d)" OSS_NEWLINE,
                            header->_totalFreeSize, header->_totalFreeSize ) ;
       len += ossSnprintf ( outBuf + len, outSize - len,
-                           "    Right Child  : 0x%08x (%d)"OSS_NEWLINE,
+                           "    Right Child  : 0x%08x (%d)" OSS_NEWLINE,
                            header->_right, header->_right ) ;
 
    exit :

@@ -54,7 +54,7 @@ namespace engine
 {
    #define JS_ERROBJ_FILENAME    "fileName"
    #define JS_ERROBJ_LINENO      "lineNumber"
-   
+
    /*
       case 1: when no argument, we display the functions of class/instance
       case 2: when getting argument in format of "Oma"/"Oma.createCoord"
@@ -66,14 +66,14 @@ namespace engine
       INT32 rc = SDB_OK ;
       stringstream ss ;
       SDB_ASSERT( NULL != cx && NULL != vp, "can not be NULL" ) ;
-   
+
       jsval jsVal = JSVAL_VOID ;
       JSObject *constructor = NULL ;
       JSString *jsStr = NULL ;
       CHAR *pStr = NULL ;
       _sptSPArguments arg( cx, argc, vp ) ;
       string jsClassName ;
-   
+
       // set return value
       JS_SET_RVAL( cx, vp, JSVAL_VOID ) ;
       // try to get the js class name
@@ -107,7 +107,7 @@ namespace engine
       }
       jsClassName.assign( pStr ) ;
       JS_free( cx, pStr ) ;
-   
+
       sptHelp::getInstance().setConvertor( arg.getOutputDataConvertor() );
       // display method or manpage
       if ( arg.argc() == 0 )
@@ -298,7 +298,7 @@ namespace engine
       rc = c.appendToBson( SPT_RVAL_KEY, *pVal, builder ) ;
       if ( SDB_OK != rc )
       {
-         ossPrintf( "%s"OSS_NEWLINE, c.getErrMsg().c_str() ) ;
+         ossPrintf( "%s" OSS_NEWLINE, c.getErrMsg().c_str() ) ;
          goto error ;
       }
       rval = builder.obj() ;
@@ -335,7 +335,7 @@ namespace engine
                                : static_cast< UINT32 >( runtimeBytesLL ) ;
       if ( NULL != _runtime )
       {
-         ossPrintf( "scope has already been started up"OSS_NEWLINE) ;
+         ossPrintf( "scope has already been started up" OSS_NEWLINE) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -343,7 +343,7 @@ namespace engine
       _runtime = JS_NewRuntime( runtimeBytes ) ;
       if ( NULL == _runtime )
       {
-         ossPrintf( "failed to init js runtime"OSS_NEWLINE ) ;
+         ossPrintf( "failed to init js runtime" OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -351,7 +351,7 @@ namespace engine
       _context = JS_NewContext( _runtime, runtimeBytes / 8 ) ;
       if ( NULL == _context )
       {
-         ossPrintf( "failed to init js context"OSS_NEWLINE ) ;
+         ossPrintf( "failed to init js context" OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -364,14 +364,14 @@ namespace engine
                                                   NULL ) ;
       if ( NULL == _global )
       {
-         ossPrintf( "failed to init js global object"OSS_NEWLINE ) ;
+         ossPrintf( "failed to init js global object" OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
 
       if ( !JS_InitStandardClasses( _context, _global ) )
       {
-         ossPrintf( "failed to init standard class"OSS_NEWLINE ) ;
+         ossPrintf( "failed to init standard class" OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -379,7 +379,7 @@ namespace engine
       rc = _loadObj( loadMask ) ;
       if ( rc )
       {
-         ossPrintf( "Failed to load object: %d"OSS_NEWLINE, rc ) ;
+         ossPrintf( "Failed to load object: %d" OSS_NEWLINE, rc ) ;
          goto error ;
       }
       _loadMask = loadMask ;
@@ -415,7 +415,7 @@ namespace engine
             rc = loadUsrDefObj( desc ) ;
             if ( rc )
             {
-               ossPrintf( "Load object[%s] failed, rc: %d"OSS_NEWLINE,
+               ossPrintf( "Load object[%s] failed, rc: %d" OSS_NEWLINE,
                           desc->getJSClassName(), rc ) ;
                goto error ;
             }
@@ -427,7 +427,7 @@ namespace engine
          rc = evalInitScripts( this ) ;
          if ( rc )
          {
-            ossPrintf ( "Failed to init spt scope, rc = %d"OSS_NEWLINE, rc ) ;
+            ossPrintf ( "Failed to init spt scope, rc = %d" OSS_NEWLINE, rc ) ;
             goto error ;
          }
       }
@@ -496,7 +496,7 @@ namespace engine
       JSFunctionSpec *specs = new JSFunctionSpec[funcs.size() + 1] ;
       if ( NULL == specs )
       {
-         ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
+         ossPrintf( "failed to allocate mem." OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -518,7 +518,7 @@ namespace engine
 
       if ( !JS_DefineFunctions( _context, _global, specs ) )
       {
-         ossPrintf( "failed to define global functions"OSS_NEWLINE ) ;
+         ossPrintf( "failed to define global functions" OSS_NEWLINE ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -579,7 +579,7 @@ namespace engine
          parentDesc = desc->getParent() ;
          if ( !parentDesc )
          {
-            ossPrintf( "Get object[%s]'s parent object failed"OSS_NEWLINE,
+            ossPrintf( "Get object[%s]'s parent object failed" OSS_NEWLINE,
                        desc->getJSClassName() ) ;
             rc = SDB_SYS ;
             goto error ;
@@ -601,14 +601,14 @@ namespace engine
       fSpecs = new JSFunctionSpec[memberFuncs.size() + 1 + 1] ;
       if ( NULL == fSpecs )
       {
-         ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
+         ossPrintf( "failed to allocate mem." OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
       sfSpecs = new JSFunctionSpec[staticFuncs.size() + 1 + 1] ;
       if ( NULL == sfSpecs )
       {
-         ossPrintf( "failed to allocate mem."OSS_NEWLINE ) ;
+         ossPrintf( "failed to allocate mem." OSS_NEWLINE ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -685,7 +685,7 @@ namespace engine
 
          if ( !prototype )
          {
-            ossPrintf( "failed to call js_initclass"OSS_NEWLINE ) ;
+            ossPrintf( "failed to call js_initclass" OSS_NEWLINE ) ;
             rc = SDB_SYS ;
             goto error ;
          }

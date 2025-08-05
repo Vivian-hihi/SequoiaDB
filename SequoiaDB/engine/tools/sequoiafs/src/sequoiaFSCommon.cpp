@@ -70,14 +70,14 @@ namespace sequoiafs
       if(bufSize < OSS_MAX_PATHSIZE + 1)
       {
          rc = SDB_INVALIDARG;
-         ossPrintf("Path buffer size is too small: %u"OSS_NEWLINE, bufSize);
+         ossPrintf("Path buffer size is too small: %u" OSS_NEWLINE, bufSize);
          goto error;
       }
 
       rc = ossGetEWD(currentPath, OSS_MAX_PATHSIZE);
       if(rc)
       {
-         ossPrintf("Get working directory failed: %d"OSS_NEWLINE, rc);
+         ossPrintf("Get working directory failed: %d" OSS_NEWLINE, rc);
          goto error;
       }
 
@@ -85,7 +85,7 @@ namespace sequoiafs
                                      OSS_MAX_PATHSIZE, diaglogPath);
       if(rc)
       {
-         ossPrintf("Build log path failed: %d"OSS_NEWLINE, rc);
+         ossPrintf("Build log path failed: %d" OSS_NEWLINE, rc);
          goto error;
       }
 
@@ -94,7 +94,7 @@ namespace sequoiafs
       {
          if(SDB_FE != rc)
          {
-             ossPrintf("Make diralog path [%s] faild: %d"OSS_NEWLINE,
+             ossPrintf("Make diralog path [%s] faild: %d" OSS_NEWLINE,
                        diaglogPath, rc);
              goto error;
          }
