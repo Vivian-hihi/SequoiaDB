@@ -286,6 +286,11 @@ namespace engine
       return _catalogVersion ;
    }
 
+   void _qgmPlScan::getObjects( ossPoolSet< ossPoolString > &setObjs ) const
+   {
+      setObjs.insert( _collection.toString() ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLSCAN__EXECONCOORD, "_qgmPlScan::_executeOnCoord" )
    INT32 _qgmPlScan::_executeOnCoord( _pmdEDUCB *eduCB )
    {
@@ -372,7 +377,6 @@ namespace engine
       }
 
       rc = _fetch( getMoreRes, eduCB ) ;
-
       if ( SDB_OK != rc && SDB_DMS_EOC != rc )
       {
          goto error ;
@@ -415,8 +419,6 @@ namespace engine
       PD_TRACE_EXITRC( SDB__QGMPLSCAN__FETCHNEXT, rc ) ;
       return rc ;
    error:
-      if ( SDB_DMS_EOC == rc )
-         _contextID = -1 ;
       goto done ;
    }
 
@@ -437,6 +439,7 @@ namespace engine
             PD_LOG( PDERROR, "Failed to getmore from context[%lld], rc = %d",
                     _contextID, rc ) ;
          }
+         _contextID = -1 ;
          goto error ;
       }
       result = buffObj.data() ;

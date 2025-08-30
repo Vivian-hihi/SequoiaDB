@@ -217,6 +217,13 @@ namespace engine
          ossTickDelta delta ;
          delta.fromUINT64( costUsecs ) ;
          monQuery->responseTime += delta ;
+
+         if ( monQuery->anchorToContext || monNeedArchiveQuery( monQuery ) )
+         {
+            MONQUERY_SET_QUERY_TEXT( eduCB(),
+                                     eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+         }
+
          if ( !monQuery->anchorToContext )
          {
             pmdGetKRCB()->getMonMgr()->removeMonitorObject( monQuery ) ;
@@ -1028,9 +1035,6 @@ namespace engine
          tmpData.diff(*(_pEDUCB->getMonAppCB())) ;
          monQuery->incMetrics(tmpData) ;
          monQuery->numMsgReply++ ;
-
-         MONQUERY_SET_QUERY_TEXT( eduCB(),
-                                  eduCB()->getMonAppCB()->getLastOpDetail() ) ;
       }
 
       if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
@@ -2439,6 +2443,12 @@ namespace engine
          if ( NULL != pCommand->collectionFullName() )
          {
             _setCollectionName( pCommand->collectionFullName() ) ;
+
+            if ( CMD_GET_COUNT == pCommand->type() )
+            {
+               /// reset the monQuery name
+               MONQUERY_SET_NAME( eduCB(), pCommand->collectionFullName() ) ;
+            }
          }
          else if ( NULL != pCommand->spaceName() )
          {
@@ -5680,7 +5690,6 @@ namespace engine
       // add last op info
       MON_SAVE_OP_DETAIL( eduCB()->getMonAppCB(), msg->opCode,
                           "Option:%s", lob.toPoolString().c_str() ) ;
-      MONQUERY_SET_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
 
       if ( !SDB_IS_LOBREADONLY_MODE( mode ) )
       {
@@ -5854,7 +5863,8 @@ namespace engine
                              lobContext->isMainShard() ? "true" : "false",
                              tSize ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
+      MONQUERY_RESET_OPCODE_IF( eduCB(), MSG_BS_LOB_WRITE_REQ, MSG_BS_LOB_OPEN_REQ ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
                                     header->version, CLS_CL_OP_WRITE ) ;
@@ -6031,7 +6041,7 @@ namespace engine
                              lobContext->isMainShard() ? "true" : "false",
                              offset, length ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
                                     header->version, CLS_CL_OP_WRITE ) ;
@@ -6134,7 +6144,7 @@ namespace engine
                              header->contextID,
                              lobContext->isMainShard() ? "true" : "false" ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
 
       rc = lobContext->close( _pEDUCB ) ;
       if ( SDB_OK != rc )
@@ -6212,7 +6222,8 @@ namespace engine
                              lobContext->isMainShard() ? "true" : "false",
                              tuplesSize ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
+      MONQUERY_RESET_OPCODE_IF( eduCB(), MSG_BS_LOB_READ_REQ, MSG_BS_LOB_OPEN_REQ ) ;
 
       if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
@@ -6335,7 +6346,8 @@ namespace engine
                              lobContext->isMainShard() ? "true" : "false",
                              tuplesSize ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
+      MONQUERY_RESET_OPCODE_IF( eduCB(), MSG_BS_LOB_REMOVE_REQ, MSG_BS_LOB_OPEN_REQ ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
                                     header->version, CLS_CL_OP_WRITE ) ;
@@ -6480,7 +6492,8 @@ namespace engine
                              lobContext->isMainShard() ? "true" : "false",
                              tSize ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
+      MONQUERY_RESET_OPCODE_IF( eduCB(), MSG_BS_LOB_UPDATE_REQ, MSG_BS_LOB_OPEN_REQ ) ;
 
       rc = _checkCLStatusAndGetSth( lobContext->getFullName(),
                                     header->version, CLS_CL_OP_WRITE ) ;
@@ -6620,7 +6633,8 @@ namespace engine
                              header->contextID,
                              lobContext->isMainShard() ? "true" : "false" ) ;
       }
-      MONQUERY_REPLACE_QUERY_TEXT( eduCB(), eduCB()->getMonAppCB()->getLastOpDetail() ) ;
+      MONQUERY_CLEAR_QUERY_TEXT( eduCB() ) ;
+      MONQUERY_RESET_OPCODE_IF( eduCB(), MSG_BS_LOB_GETRTDETAIL_REQ, MSG_BS_LOB_OPEN_REQ ) ;
 
       if ( OSS_BIT_TEST( header->flags, FLG_LOBREAD_PRIMARY ) )
       {
