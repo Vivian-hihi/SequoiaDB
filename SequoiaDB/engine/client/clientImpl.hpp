@@ -25,6 +25,7 @@
 #include "ossUtil.hpp"
 #include "utilAuthSCRAMSHA.hpp"
 #include "ossLatch.hpp"
+#include "msg.h"
 
 using namespace bson ;
 
@@ -1582,6 +1583,9 @@ namespace sdbclient
       engine::Charset          _clientCharset ;
       engine::Charset          _resultsCharset ;
       BOOLEAN                  _isOperationInterrupted ;
+      BOOLEAN                  _useClientQueryID ;
+      MsgGlobalID              _currentGlobalID ;
+      MsgGlobalID              _lastGlobalID ;
 
       void _disconnect () ;
       void _removeObjects() ;
@@ -2252,6 +2256,12 @@ namespace sdbclient
 
       INT32 invalidateFsCache( const BSONObj &options = _sdbStaticObject,
                                const CHAR *pExpiredTime = NULL );
+
+      void enableClientQueryID() ;
+
+      void incQueryID() ;
+
+      UINT32 getQueryIDStr( CHAR *pStr, UINT32 strlen ) ;
    } ;
    typedef class _sdbImpl sdbImpl ;
 
