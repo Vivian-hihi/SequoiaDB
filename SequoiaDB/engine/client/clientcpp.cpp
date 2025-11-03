@@ -3599,7 +3599,9 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbCollectionImpl::createLob( _sdbLob **lob, const bson::OID *oid )
+   INT32 _sdbCollectionImpl::createLob( _sdbLob **lob,
+                                        const bson::OID *oid,
+                                        const bson::BSONObj &userObj )
    {
       INT32 rc = SDB_OK ;
       OID oidObj ;
@@ -3630,12 +3632,12 @@ do                                                            \
       if ( !_connection->_getIsOldVersionLobServer() )
       {
          BOOLEAN isOldVersionLobServer = FALSE ;
-         rc = _createLob( lob, &oidObj, &isOldVersionLobServer ) ;
+         rc = _createLob( lob, &oidObj, &isOldVersionLobServer, userObj ) ;
          if ( isOldVersionLobServer )
          {
             // deal with old version server. oid should be generate in client side
             oidObj = OID::gen() ;
-            rc = _createLob( lob, &oidObj ) ;
+            rc = _createLob( lob, &oidObj, NULL, userObj ) ;
             if ( SDB_OK == rc )
             {
                _connection->_setIsOldVersionLobServer( TRUE ) ;
@@ -3650,7 +3652,7 @@ do                                                            \
             oidObj = OID::gen() ;
          }
 
-         rc = _createLob( lob, &oidObj ) ;
+         rc = _createLob( lob, &oidObj, NULL, userObj ) ;
       }
 
       if ( SDB_OK != rc )
@@ -3665,7 +3667,8 @@ do                                                            \
    }
 
    INT32 _sdbCollectionImpl::_createLob( _sdbLob **lob, const bson::OID *oid,
-                                         BOOLEAN *isOldVersionLobServer )
+                                         BOOLEAN *isOldVersionLobServer,
+                                         const bson::BSONObj &userObj )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -3688,6 +3691,12 @@ do                                                            \
          }
 
          bob.append( FIELD_NAME_LOB_OPEN_MODE, SDB_LOB_CREATEONLY ) ;
+
+         if ( !userObj.isEmpty() )
+         {
+            bob.append( FIELD_NAME_LOB_USERDATA, userObj ) ;
+         }
+
          obj = bob.obj() ;
       }
       catch ( std::exception )
