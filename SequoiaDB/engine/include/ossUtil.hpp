@@ -784,6 +784,11 @@ public :
                                                        timeValueInMicroseconds);
    } ;
 
+   UINT64 convertToMicroseconds() const
+   {
+      return ((ossTickDelta*)this)->toUINT64() ;
+   }
+
    void convertToTime
    (
       const ossTickConversionFactor &  cFactor,
