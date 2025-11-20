@@ -98,7 +98,7 @@ INT32 msgCheckBuffer ( CHAR **ppBuffer,
       }
       else
       {
-         newSize = OSS_MAX( ossAlign4 ( packetLength ), ossAlign4( *bufferSize + MSG_MEM_INC_STEP_SIZE ) ;
+         newSize = OSS_MAX( ossAlign4 ( packetLength ), ossAlign4( *bufferSize + MSG_MEM_INC_STEP_SIZE ) ) ;
       }
 
       if ( cb )
