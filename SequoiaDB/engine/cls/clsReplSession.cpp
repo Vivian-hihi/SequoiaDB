@@ -1836,7 +1836,7 @@ namespace engine
          routeAgent()->syncSend( handle, (MsgHeader *)&msg ) ;
          goto done ;
       }
-      else if ( 0 == req->next.offset )
+      else if ( 0 == req->next.offset && 0 != _logger->getStartUpExpectLSN() )
       {
          /// empty node add in, need full sync
          msg.header.res = SDB_CLS_SYNC_FAILED ;
