@@ -224,6 +224,8 @@ namespace engine
                         const utilLocationInfo &info,
                         BOOLEAN isCriticalLoc = FALSE )
       {
+         _waitPlan.isCritical = isCriticalLoc ;
+
          switch ( _replStrategy )
          {
             case SDB_CONSISTENCY_NODE:
