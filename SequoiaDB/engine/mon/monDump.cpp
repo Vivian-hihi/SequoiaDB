@@ -2524,7 +2524,7 @@ namespace engine
    }
 
    INT32 monCollection2Obj ( const monCollection &full, UINT32 addInfoMask,
-                             BSONObjBuilder &ob )
+                             BSONObjBuilder &ob, BOOLEAN addStatAssit )
    {
       INT32 rc = SDB_OK ;
       try
@@ -2539,6 +2539,10 @@ namespace engine
             ob.appendStrWithNoTerminating ( FIELD_NAME_COLLECTIONSPACE,
                                             full._name,
                                             pDot - full._name ) ;
+         }
+         if ( addStatAssit )
+         {
+            ob.append( FIELD_NAME_LOB_CAPACITY, (INT64)full._totalLobCapacity ) ;
          }
          /// add detial
          BSONArrayBuilder ba( ob.subarrayStart( FIELD_NAME_DETAILS ) ) ;
