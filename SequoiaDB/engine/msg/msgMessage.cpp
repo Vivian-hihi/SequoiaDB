@@ -640,6 +640,7 @@ INT32 msgExtractInsert ( const CHAR *pBuffer, INT32 *pflag,
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTINSERT ) ;
 
    const static INT32 _minSize = ossAlign4( offsetof(MsgOpInsert, name) + 1 ) ;
+   const static INT32 _bsonMinSize = 5 ;
 
    INT32 offset = 0 ;
    INT32 size = 0 ;
@@ -682,7 +683,7 @@ INT32 msgExtractInsert ( const CHAR *pBuffer, INT32 *pflag,
    {
       objSize = *((SINT32*)pCurrent) ;
       size = ossAlign4( objSize ) ;
-      if ( size < MSG_BSON_MIN_LEN )
+      if ( size < _bsonMinSize )
       {
          // If there is a hint in the insertion message, it's ALWAYS at the end
          // of the message, and 4 bytes(all set to 0) are placed before the
@@ -692,7 +693,7 @@ INT32 msgExtractInsert ( const CHAR *pBuffer, INT32 *pflag,
          // be returned in the else branch.
          if ( hasHint && 0 == size &&
               ( ( pInsert->header.messageLength - offset ) >=
-                MSG_BSON_MIN_LEN + MSG_HINT_MARK_LEN ) )
+                _bsonMinSize + MSG_HINT_MARK_LEN ) )
          {
             offset += MSG_HINT_MARK_LEN ;
             pCurrent += MSG_HINT_MARK_LEN ;
