@@ -34,7 +34,7 @@ function test1( fileNameBase, filePath, isLocal )
    file.write( content );
    assert.equal( file.tellPosition(), contentSize );
    file.close();
-   assert.equal( File.getSize( fileFullName ), contentSize );
+   assert.equal( getFileSize( fileFullName, isLocal ), contentSize );
    checkTruncateResult( filePath, fileName, content, isLocal );
 
    fileName = fileNameBase + "_2";
@@ -46,7 +46,7 @@ function test1( fileNameBase, filePath, isLocal )
    file.write( "3456789" );
    assert.equal( file.tellPosition(), contentSize );
    file.close();
-   assert.equal( File.getSize( fileFullName ), contentSize );
+   assert.equal( getFileSize( fileFullName, isLocal ), contentSize );
    checkTruncateResult( filePath, fileName, content, isLocal );
 
    fileName = fileNameBase + "_3";
@@ -58,7 +58,7 @@ function test1( fileNameBase, filePath, isLocal )
    file.write( content );
    assert.equal( file.tellPosition(), contentSize * 2 );
    file.close();
-   assert.equal( File.getSize( fileFullName ), 20 );
+   assert.equal( getFileSize( fileFullName, isLocal ), 20 );
    checkTruncateResult( filePath, fileName, content + content, isLocal );
 
    removeFile ( filePath, isLocal )
@@ -131,4 +131,19 @@ function removeFile ( filePath, isLocal )
          throw e ;
       }
    }
+}
+
+function getFileSize( fileFullName, isLocal )
+{
+   var fileSize = 0;
+   if( isLocal )
+   {
+      fileSize = File.getSize( fileFullName );
+   }
+   else
+   {
+      var remote = new Remote( COORDHOSTNAME, CMSVCNAME );
+      fileSize = remote.getFile().getSize( fileFullName );
+   }
+   return fileSize;
 }
