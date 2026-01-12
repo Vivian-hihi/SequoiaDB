@@ -2584,7 +2584,10 @@ namespace engine
       else
       {
          rc = _handler->handleMsg( eh->handle(), pMsg, (const CHAR *)pMsg ) ;
-         _netIn.add( originalLen ) ;
+         if ( isNotSysInfoMsg )
+         {
+            _netIn.add( originalLen ) ;
+         }
          if ( SDB_NET_BROKEN_MSG == rc )
          {
             eh->close() ;

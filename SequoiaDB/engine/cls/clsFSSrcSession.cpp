@@ -1810,6 +1810,7 @@ namespace engine
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
 
       INT32 nomore = 1 ;
+      MsgRouteID primaryID ;
       _beginTick = pmdGetDBTick() ;
 
       SDB_DPSCB *dpscb = pmdGetKRCB()->getDPSCB() ;
@@ -1827,6 +1828,7 @@ namespace engine
          goto done ;
       }
 
+      primaryID = _pRepl->getPrimary() ;
       //if not ready, can't be the source node of the full sync
       if ( SDB_OK != ( rc = _isReady() ) )
       {
@@ -1835,6 +1837,27 @@ namespace engine
          msg.header.res = rc ;
          _quit = TRUE ;
          _agent->syncSend( handle, (MsgHeader *)&msg ) ;
+         goto done ;
+      }
+      /// when unknown who is primary
+      else if ( MSG_INVALID_ROUTEID == primaryID.value ||
+                SERVICE_NORMAL != _pRepl->getNodeStatus( primaryID.value ) )
+      {
+         if ( MSG_INVALID_ROUTEID == primaryID.value )
+         {
+            rc = SDB_RTN_NO_PRIMARY_FOUND ;
+            PD_LOG( PDWARNING, "Session[%s]: Don't known who is primary[%d], refused",
+                    sessionName(), rc ) ;
+         }
+         else
+         {
+            rc = SDB_DB_REBUILDING ;
+            PD_LOG( PDWARNING, "Session[%s]: Primary node is in rebuilding[%d], refused",
+                    sessionName(), rc ) ;
+         }
+         msg.header.res = rc ;
+         _quit = TRUE ;
+         _agent->syncSend( handle, (MsgHeader*)&msg ) ;
          goto done ;
       }
 
