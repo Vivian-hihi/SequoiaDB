@@ -48,6 +48,7 @@
 #include "charsetConvertorFactory.hpp"
 #include "charsetUtils.hpp"
 #include "boost/move/unique_ptr.hpp"
+#include <sstream>
 #if defined (_WINDOWS)
 #include <windows.h>
 #include <io.h>
@@ -78,13 +79,14 @@ static INT32 readFromPipe ( OSSNPIPE & npipe , CHAR ** output, BOOLEAN trim = TR
 
    try
    {
-      string   buf = "" ;
+      string   buf ;
+      std::ostringstream ostream ;
       while ( TRUE )
       {
          rc = ossReadNamedPipe ( npipe , &c , 1 , NULL ) ;
          if ( SDB_OK == rc )
          {
-            buf += c ;
+            ostream << c ;
          }
          else if ( SDB_EOF == rc )
          {
@@ -96,6 +98,7 @@ static INT32 readFromPipe ( OSSNPIPE & npipe , CHAR ** output, BOOLEAN trim = TR
             goto error ;
          }
       }
+      buf = ostream.str() ;
 
       if ( ! output )
          goto done ;
