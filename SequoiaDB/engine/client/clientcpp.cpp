@@ -7583,12 +7583,14 @@ do                                                            \
    }
 
    INT32 _sdbDataCenterImpl::_innerAlter( const CHAR *pValue,
-                                          const bson::BSONObj *pInfo )
+                                          const bson::BSONObj *pInfo,
+                                          bson::BSONObj *pResultObj )
    {
       INT32 rc            = SDB_OK ;
       const CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DC ;
       BSONObjBuilder bob ;
       BSONObj newObj ;
+      _sdbCursor * cursor = NULL ;
 
       // check
       if ( NULL == pValue )
@@ -7612,13 +7614,28 @@ do                                                            \
 
       // run command
       rc = _connection->_runCommand( pCommand, &newObj, NULL, NULL, NULL,
-                                     0, 0, 0, -1, NULL ) ;
+                                     0, 0, 0, -1, ( pResultObj ? &cursor : NULL ) ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
 
+      if ( pResultObj && cursor )
+      {
+         rc = cursor->next( *pResultObj ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            /// ignore error
+            rc = SDB_OK ;
+         }
+         else if ( rc )
+         {
+            goto error ;
+         }
+      }
+
    done :
+      SAFE_OSS_DELETE( cursor ) ;
       return rc ;
    error :
       goto done ;
@@ -7688,7 +7705,7 @@ do                                                            \
       return rc ;
    }
 
-   INT32 _sdbDataCenterImpl::setActiveLocation( const CHAR *pLocation )
+   INT32 _sdbDataCenterImpl::setActiveLocation( const CHAR *pLocation, bson::BSONObj &result )
    {
       INT32 rc = SDB_OK ;
 
@@ -7713,7 +7730,7 @@ do                                                            \
          goto error ;
       }
 
-      rc = _innerAlter( CMD_VALUE_NAME_SET_ACTIVE_LOCATION, &option ) ;
+      rc = _innerAlter( CMD_VALUE_NAME_SET_ACTIVE_LOCATION, &option, &result ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -7725,7 +7742,9 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbDataCenterImpl::setLocation( const CHAR * pHostName, const CHAR * pLocation )
+   INT32 _sdbDataCenterImpl::setLocation( const CHAR * pHostName,
+                                          const CHAR * pLocation,
+                                          bson::BSONObj &result )
    {
       INT32 rc = SDB_OK ;
 
@@ -7751,7 +7770,7 @@ do                                                            \
          goto error ;
       }
 
-      rc = _innerAlter( CMD_VALUE_NAME_SET_LOCATION, &option ) ;
+      rc = _innerAlter( CMD_VALUE_NAME_SET_LOCATION, &option, &result ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -7763,14 +7782,24 @@ do                                                            \
       goto done ;
    }
 
-   INT32 _sdbDataCenterImpl::startMaintenanceMode( const BSONObj & options )
+   INT32 _sdbDataCenterImpl::startMaintenanceMode( const BSONObj & options, bson::BSONObj &result )
    {
-      return _innerAlter( CMD_VALUE_NAME_START_MAINTENANCE_MODE, &options ) ;
+      return _innerAlter( CMD_VALUE_NAME_START_MAINTENANCE_MODE, &options, &result ) ;
    }
 
-   INT32 _sdbDataCenterImpl::stopMaintenanceMode( const BSONObj & options )
+   INT32 _sdbDataCenterImpl::stopMaintenanceMode( const BSONObj & options, bson::BSONObj &result )
    {
-      return _innerAlter( CMD_VALUE_NAME_STOP_MAINTENANCE_MODE, &options ) ;
+      return _innerAlter( CMD_VALUE_NAME_STOP_MAINTENANCE_MODE, &options, &result ) ;
+   }
+
+   INT32 _sdbDataCenterImpl::startCriticalMode( const BSONObj & options, bson::BSONObj &result )
+   {
+      return _innerAlter( CMD_VALUE_NAME_START_CRITICAL_MODE, &options, &result ) ;
+   }
+
+   INT32 _sdbDataCenterImpl::stopCriticalMode( const BSONObj & options, bson::BSONObj &result )
+   {
+      return _innerAlter( CMD_VALUE_NAME_STOP_CRITICAL_MODE, &options, &result ) ;
    }
 
    /*

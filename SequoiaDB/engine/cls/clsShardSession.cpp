@@ -2502,8 +2502,8 @@ namespace engine
 
             rc = _checkCLStatusAndGetSth( pCommand->collectionFullName(),
                                           pQuery->version, opType,
-                                          &replSize, &clUniqueID ) ;
-
+                                          &replSize, &clUniqueID, NULL,
+                                          pCommand->allowInMaintenanceMode() ) ;
             if ( SDB_OK != rc )
             {
                goto error ;
@@ -2616,7 +2616,7 @@ namespace engine
 
          if ( pCommand->spaceName() )
          {
-            rc = _checkReplStatus() ;
+            rc = _checkReplStatus( pCommand->allowInMaintenanceMode() ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "Failed to check repl status, rc: %d", rc ) ;
@@ -7120,13 +7120,6 @@ namespace engine
 
       while( TRUE )
       {
-         // Check if node is in maintenance mode
-         if ( _pReplSet->isInMaintenanceMode() )
-         {
-            rc = SDB_CLS_NODE_IN_MAINTENANCE ;
-            goto error ;
-         }
-
          rc = _pReplSet->primaryCheck( _pEDUCB, waitReelectSec ) ;
          if ( SDB_OK == rc )
          {
@@ -7350,7 +7343,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKREPLSTATUS, "_clsShdSession::_checkReplStatus" )
-   INT32 _clsShdSession::_checkReplStatus()
+   INT32 _clsShdSession::_checkReplStatus( BOOLEAN allowInMaintenance )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__CLSSHDSESS__CKREPLSTATUS ) ;
@@ -7371,7 +7364,8 @@ namespace engine
       {
          rc = SDB_RTN_IN_REBUILD ;
       }
-      else if ( _pReplSet->isInMaintenanceMode() )
+      else if ( !allowInMaintenance && _pReplSet->isInMaintenanceMode() &&
+                !_pReplSet->primaryIsMe() )
       {
          rc = SDB_CLS_NODE_IN_MAINTENANCE ;
       }
@@ -7386,7 +7380,8 @@ namespace engine
                                                   CLS_CL_OP_TYPE opType,
                                                   INT16 *w,
                                                   utilCLUniqueID *clUniqueID,
-                                                  BOOLEAN *repairCheck )
+                                                  BOOLEAN *repairCheck,
+                                                  BOOLEAN allowInMaintenance )
    {
       INT32 rc = SDB_OK ;
       INT32 preCheckRC = SDB_OK ;
@@ -7399,11 +7394,13 @@ namespace engine
          case CLS_CL_OP_WRITE:
          {
             preCheckRC = _checkWriteStatus() ;
+            allowInMaintenance = TRUE ;
             break ;
          }
          case CLS_CL_OP_READ_ON_PRY:
          {
             preCheckRC = _checkPrimaryWhenRead() ;
+            allowInMaintenance = TRUE ;
             break ;
          }
          case CLS_CL_OP_READ_ON_SND:
@@ -7425,7 +7422,7 @@ namespace engine
          // so that cl version was changed again.
       }
 
-      rc = _checkReplStatus() ;
+      rc = _checkReplStatus( allowInMaintenance ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to check status of repl-set, rc: %d", rc ) ;

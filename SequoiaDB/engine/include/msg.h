@@ -754,6 +754,7 @@ typedef struct _MsgHeaderV1 MsgHeaderV1 ;
 #define FLAG_DETACH_CONTEXT            0x0002
 #define FLAG_NOCOMPRESSED_ADVICE       0x0004
 #define FLAG_COMPRESSED                0x0008
+#define FLAG_NODELAY                   0x0010
 
 struct _MsgHeader
 {

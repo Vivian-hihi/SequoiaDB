@@ -46,6 +46,8 @@ namespace engine
    JS_MEMBER_FUNC_DEFINE( _sptDBDC, setLocation )
    JS_MEMBER_FUNC_DEFINE( _sptDBDC, startMaintenanceMode )
    JS_MEMBER_FUNC_DEFINE( _sptDBDC, stopMaintenanceMode )
+   JS_MEMBER_FUNC_DEFINE( _sptDBDC, startCriticalMode )
+   JS_MEMBER_FUNC_DEFINE( _sptDBDC, stopCriticalMode )
 
    JS_BEGIN_MAPPING( _sptDBDC, SPT_DC_NAME )
       JS_ADD_CONSTRUCT_FUNC( construct )
@@ -59,6 +61,8 @@ namespace engine
       JS_ADD_MEMBER_FUNC( "setLocation", setLocation )
       JS_ADD_MEMBER_FUNC( "startMaintenanceMode", startMaintenanceMode )
       JS_ADD_MEMBER_FUNC( "stopMaintenanceMode", stopMaintenanceMode )
+      JS_ADD_MEMBER_FUNC( "startCriticalMode", startCriticalMode )
+      JS_ADD_MEMBER_FUNC( "stopCriticalMode", stopCriticalMode )
       JS_SET_CVT_TO_BSON_FUNC( _sptDBDC::cvtToBSON )
       JS_SET_BSON_TO_JSOBJ_FUNC( _sptDBDC::bsonToJSObj )
    JS_MAPPING_END()
@@ -185,6 +189,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string locationName ;
+      BSONObj result ;
 
       rc = arg.getString( 0, locationName ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -198,11 +203,16 @@ namespace engine
          goto error ;
       }
 
-      rc = _dc.setActiveLocation( locationName.c_str() ) ;
+      rc = _dc.setActiveLocation( locationName.c_str(), result ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to set active location" ) ;
          goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
 
    done:
@@ -218,6 +228,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string hostName ;
       string locationName ;
+      BSONObj result ;
 
       rc = arg.getString( 0, hostName ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -243,11 +254,16 @@ namespace engine
          goto error ;
       }
 
-      rc = _dc.setLocation( hostName.c_str() ,locationName.c_str() ) ;
+      rc = _dc.setLocation( hostName.c_str() ,locationName.c_str(), result ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to set location" ) ;
          goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
 
    done:
@@ -262,6 +278,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj options ;
+      BSONObj result ;
 
       if ( arg.argc() == 0 )
       {
@@ -277,11 +294,16 @@ namespace engine
          goto error ;
       }
 
-      rc = _dc.startMaintenanceMode( options ) ;
+      rc = _dc.startMaintenanceMode( options, result ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to start maintenance mode" ) ;
          goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
 
    done:
@@ -296,6 +318,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj options ;
+      BSONObj result ;
 
       if ( arg.argc() > 0 )
       {
@@ -307,11 +330,92 @@ namespace engine
          }
       }
 
-      rc = _dc.stopMaintenanceMode( options ) ;
+      rc = _dc.stopMaintenanceMode( options, result ) ;
       if ( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to stop maintenance mode" ) ;
          goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptDBDC::startCriticalMode( const _sptArguments &arg,
+                                      _sptReturnVal & rval,
+                                      bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj options ;
+      BSONObj result ;
+
+      if ( arg.argc() == 0 )
+      {
+         rc = SDB_OUT_OF_BOUND ;
+         detail = BSON( SPT_ERR << "Options can't be null" ) ;
+         goto error ;
+      }
+
+      rc = arg.getBsonobj( 0, options ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Options must be obj" ) ;
+         goto error ;
+      }
+
+      rc = _dc.startCriticalMode( options, result ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to start critical mode" ) ;
+         goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptDBDC::stopCriticalMode( const _sptArguments &arg,
+                                     _sptReturnVal &rval,
+                                     bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj options ;
+      BSONObj result ;
+
+      if ( arg.argc() > 0 )
+      {
+         rc = arg.getBsonobj( 0, options ) ;
+         if ( SDB_OK != rc )
+         {
+            detail = BSON( SPT_ERR << "Options must be obj" ) ;
+            goto error ;
+         }
+      }
+
+      rc = _dc.stopCriticalMode( options, result ) ;
+      if ( SDB_OK != rc )
+      {
+         detail = BSON( SPT_ERR << "Failed to stop critical mode" ) ;
+         goto error ;
+      }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
       }
 
    done:
