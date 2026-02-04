@@ -63,6 +63,7 @@
 #include "boost/move/unique_ptr.hpp"
 #include <boost/thread/thread.hpp>
 #include <strings.h>
+#include "pmdEnv.hpp"
 
 #if defined (_WINDOWS)
 #include <windows.h>
@@ -1304,6 +1305,7 @@ done :
    }
    charsetConvertorFactory::deinit() ;
    container.fini() ;
+   pmdDisableSignalEvent() ;
    PD_TRACE_EXITRC ( SDB_SDB_MAIN, rc );
 
    return rc2ReturnCode( rc ) ;

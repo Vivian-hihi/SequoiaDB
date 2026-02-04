@@ -49,6 +49,7 @@
 #include "charsetUtils.hpp"
 #include "boost/move/unique_ptr.hpp"
 #include <sstream>
+#include "pmdEnv.hpp"
 #if defined (_WINDOWS)
 #include <windows.h>
 #include <io.h>
@@ -509,6 +510,7 @@ done :
    }
    charsetConvertorFactory::deinit() ;
    container.fini() ;
+   pmdDisableSignalEvent() ;
    PD_TRACE_EXITRC ( SDB_SDBBP_MAIN, rc );
    return rc ;
 error :
