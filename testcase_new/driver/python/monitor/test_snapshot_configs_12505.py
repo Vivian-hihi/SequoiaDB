@@ -18,8 +18,9 @@ class TestSnapshotConfigs12505(testlib.SdbTestBase):
       cursor = self.db.get_snapshot(SDB_SNAP_CONFIGS)
       act_results = testlib.get_all_records(cursor)
       act_result = act_results[0]
+      print(act_result)
 
-      # check snapshot 
+      # check snapshot
       self.check_snapshot(expect_result, act_result)
 
    def tearDown(self):
