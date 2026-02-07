@@ -467,6 +467,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONObj options ;
+      BSONObj result ;
 
       rc = arg.getBsonobj( 0, options ) ;
       if( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
@@ -475,12 +476,18 @@ namespace engine
          goto error ;
       }
 
-      rc = _rg.reelect( options ) ;
+      rc = _rg.reelect( options, &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to reelect master" ) ;
          goto error ;
       }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
+      }
+
    done:
       return rc ;
    error:
@@ -494,6 +501,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       string location ;
       BSONObj options ;
+      BSONObj result ;
 
       rc = arg.getString( 0, location ) ;
       if ( SDB_OUT_OF_BOUND == rc )
@@ -514,12 +522,18 @@ namespace engine
          goto error ;
       }
 
-      rc = _rg.reelectLocation( location.c_str(), options ) ;
+      rc = _rg.reelectLocation( location.c_str(), options, &result ) ;
       if( SDB_OK != rc )
       {
          detail = BSON( SPT_ERR << "Failed to reelect location master" ) ;
          goto error ;
       }
+
+      if ( !result.isEmpty() )
+      {
+         rval.getReturnVal().setValue( result ) ;
+      }
+
    done:
       return rc ;
    error:
