@@ -528,12 +528,12 @@
 
       <sequential>
          <if>
-            <available file="${basedir}/before_configuretest.sh"/>
+            <available file="${CI_WORK_DIR}/testcase/tools/before_configuretest.sh"/>
             <then>
                <echo message="CONFIGURETEST before: upload and execute before_configuretest.sh"/>
 
                <!-- upload -->
-               <scp localFile="${basedir}/before_configuretest.sh"
+               <scp localFile="${CI_WORK_DIR}/testcase/tools/before_configuretest.sh"
                     remoteTodir="@{remoteuser}@@@{hostname}:@{installpath}/tools/sdb-schedule/"
                     password="@{remotepwd}"
                     trust="true"
@@ -576,21 +576,21 @@
       <sequential>
          <if>
             <and>
-               <available file="${basedir}/after_configuretest.sh"/>
-               <available file="${basedir}/removeDSCluster.js"/>
+               <available file="${CI_WORK_DIR}/testcase/tools/after_configuretest.sh"/>
+               <available file="${CI_WORK_DIR}/testcase/tools/removeDSCluster.js"/>
             </and>
             <then>
                <echo message="CONFIGURETEST after: upload and execute after_configuretest.sh"/>
 
                <!-- upload after_configuretest.sh -->
-               <scp localFile="${basedir}/after_configuretest.sh"
+               <scp localFile="${CI_WORK_DIR}/testcase/tools/after_configuretest.sh"
                     remoteTodir="@{remoteuser}@@@{hostname}:@{installpath}/tools/sdb-schedule/"
                     password="@{remotepwd}"
                     trust="true"
                     failonerror="true"/>
 
                <!-- upload removeDSCluster.js -->
-               <scp localFile="${basedir}/removeDSCluster.js"
+               <scp localFile="${CI_WORK_DIR}/testcase/tools/removeDSCluster.js"
                     remoteTodir="@{remoteuser}@@@{hostname}:@{installpath}/tools/sdb-schedule/"
                     password="@{remotepwd}"
                     trust="true"
