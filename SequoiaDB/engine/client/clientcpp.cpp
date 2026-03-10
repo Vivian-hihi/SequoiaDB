@@ -7743,7 +7743,9 @@ do                                                            \
       return rc ;
    }
 
-   INT32 _sdbDataCenterImpl::setActiveLocation( const CHAR *pLocation, bson::BSONObj &result )
+   INT32 _sdbDataCenterImpl::setActiveLocation( const CHAR *pLocation,
+                                                bson::BSONObj &result,
+                                                const bson::BSONObj &options )
    {
       INT32 rc = SDB_OK ;
 
@@ -7760,6 +7762,16 @@ do                                                            \
       {
          // build { ActiveLocation: pLocation }
          builder.append( FIELD_NAME_GROUP_ACTIVE_LOCATION, pLocation ) ;
+         // add other options
+         BSONObjIterator itr( options ) ;
+         while( itr.more() )
+         {
+            BSONElement e = itr.next() ;
+            if ( 0 != ossStrcmp( e.fieldName(), FIELD_NAME_GROUP_ACTIVE_LOCATION ) )
+            {
+               builder.append( e ) ;
+            }
+         }
          option = builder.obj() ;
       }
       catch( const std::exception &e )
@@ -7782,7 +7794,8 @@ do                                                            \
 
    INT32 _sdbDataCenterImpl::setLocation( const CHAR * pHostName,
                                           const CHAR * pLocation,
-                                          bson::BSONObj &result )
+                                          bson::BSONObj &result,
+                                          const bson::BSONObj &options )
    {
       INT32 rc = SDB_OK ;
 
@@ -7800,6 +7813,17 @@ do                                                            \
          // build { HostName: pHostName, Location: pLocation }
          builder.append( FIELD_NAME_HOST, pHostName ) ;
          builder.append( FIELD_NAME_NODE_LOCATION, pLocation ) ;
+         // add other options
+         BSONObjIterator itr( options ) ;
+         while( itr.more() )
+         {
+            BSONElement e = itr.next() ;
+            if ( 0 != ossStrcmp( e.fieldName(), FIELD_NAME_HOST ) &&
+                 0 != ossStrcmp( e.fieldName(), FIELD_NAME_NODE_LOCATION ) )
+            {
+               builder.append( e ) ;
+            }
+         }
          option = builder.obj() ;
       }
       catch( const std::exception &e )
