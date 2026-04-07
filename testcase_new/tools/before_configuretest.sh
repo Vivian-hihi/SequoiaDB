@@ -37,7 +37,7 @@ cleanup() {
 
     ${INSTALL_DIR}/bin/sdb -f "$REMOVE_JS" \
         -e "var DSHOSTNAME=\"$CURRENT_HOSTNAME\"; \
-            var DSSVCNAME=36100; \
+            var DSSVCNAME=32010; \
             var COORDHOSTNAME=\"$COORDHOSTNAME\"; \
             var RSRVNODEDIR=\"${INSTALL_DIR}/database\";" \
         >/dev/null 2>&1
@@ -53,7 +53,7 @@ run_or_fail() {
 
 deploy_datasource_cluster() {
 
-    ${INSTALL_DIR}/bin/sdblist -p 36100 >/dev/null 2>&1
+    ${INSTALL_DIR}/bin/sdblist -p 32010 >/dev/null 2>&1
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -72,11 +72,11 @@ deploy_datasource_cluster() {
 
     cat > sequoiadb.conf <<EOF
 role,groupName,hostName,serviceName,dbPath
-catalog,SYSCatalogGroup,$CURRENT_HOSTNAME,36000,[installPath]/database/catalog/36000
-coord,SYSCoord,$CURRENT_HOSTNAME,36100,[installPath]/database/coord/36100
-data,group1,$CURRENT_HOSTNAME,36200,[installPath]/database/data/36200
-data,group2,$CURRENT_HOSTNAME,36300,[installPath]/database/data/36300
-data,group3,$CURRENT_HOSTNAME,36400,[installPath]/database/data/36400
+catalog,SYSCatalogGroup,$CURRENT_HOSTNAME,32000,[installPath]/database/catalog/32000
+coord,SYSCoord,$CURRENT_HOSTNAME,32010,[installPath]/database/coord/32010
+data,group1,$CURRENT_HOSTNAME,32020,[installPath]/database/data/32020
+data,group2,$CURRENT_HOSTNAME,32030,[installPath]/database/data/32030
+data,group3,$CURRENT_HOSTNAME,32040,[installPath]/database/data/32040
 EOF
 
     bash quickDeploy.sh --sdb || return 1
@@ -93,7 +93,7 @@ create_datasource() {
     ${INSTALL_DIR}/bin/sdb 'tmpDB.getDataSource("sdbscheduledatasource")' >/dev/null 2>&1
     if [ $? -ne 0 ]; then
         run_or_fail ${INSTALL_DIR}/bin/sdb \
-            "tmpDB.createDataSource(\"sdbscheduledatasource\", \"$CURRENT_HOSTNAME:36100\", \"sdbadmin\", \"sdbadmin\")" || return 1
+            "tmpDB.createDataSource(\"sdbscheduledatasource\", \"$CURRENT_HOSTNAME:32010\", \"sdbadmin\", \"sdbadmin\")" || return 1
     fi
 
     run_or_fail ${INSTALL_DIR}/bin/sdb 'tmpDB.close()' || return 1
