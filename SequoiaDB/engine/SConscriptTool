@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 Import("toolEnv")
 Import("linux")
@@ -918,7 +919,15 @@ if linux64:
 if linux64:
     Import("fuse_lib")
     sequoiaFSEnv = toolEnv.Clone()
-    sequoiaFSEnv.Append( LINKFLAGS=" -no-pie " )
+    try:
+        devnull = open(os.devnull, 'w')
+        ret = subprocess.call(['g++', '-no-pie', '-x', 'c++', '-E', '-'],
+                              stdin=devnull, stdout=devnull, stderr=devnull)
+        devnull.close()
+        if ret == 0:
+            sequoiaFSEnv.Append( LINKFLAGS=" -no-pie " )
+    except:
+        pass
     sequoiafs = sequoiaFSEnv.Program("sequoiafs",
         sequoiaFSFiles,
         LIBDEPS=["bson", "oss", "pd", "util", "pmd", "pmdMT", "rtnJob", "rtn", "client", "clientcpp", "mon", "fs", fuse_lib, "net", "msg", "charset"],
