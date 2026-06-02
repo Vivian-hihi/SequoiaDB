@@ -54,7 +54,7 @@
    {
       _getBusinessList( async, function( buzList ){
          $.each( buzList, function( index, buzInfo ){
-            if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) < 0 && buzInfo['AddtionType'] == 0 )
+            if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) < 0 )
             {
                _getPluginRoute( async, buzInfo['ClusterName'], buzInfo['BusinessName'], function( routes ){
                   if( moduleTypeList.indexOf( buzInfo['BusinessType'] ) >= 0 )

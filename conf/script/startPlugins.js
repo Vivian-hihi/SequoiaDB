@@ -79,7 +79,15 @@ function _stopPlugin( name, path )
    catch( e )
    {
       _throwError( getLastError(), e,
-                   sprintf( "plugin starter not found, name: ?", name ) ) ;
+                   sprintf( "plugin stop script not found, name: ?", name ) ) ;
+   }
+
+   if( rc !== true )
+   {
+      PD_LOGGER.log( PDERROR,
+                     sprintf( "plugin stop script not found: ?, name: ?",
+                              stopFile, name ) ) ;
+      return ;
    }
 
    var c = new Cmd() ;
@@ -116,6 +124,14 @@ function _runPlugin( name, path )
    {
       _throwError( getLastError(), e,
                    sprintf( "plugin starter not found, name: ?", name ) ) ;
+   }
+
+   if( rc !== true )
+   {
+      PD_LOGGER.log( PDERROR,
+                     sprintf( "plugin start script not found: ?, name: ?",
+                              startFile, name ) ) ;
+      return ;
    }
 
    var c = new Cmd() ;

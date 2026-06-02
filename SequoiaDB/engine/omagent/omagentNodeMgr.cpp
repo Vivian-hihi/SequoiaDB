@@ -94,6 +94,15 @@ namespace engine
             mutex = TRUE ;
          }
       }
+      else if ( RTN_JOB_STOPNODE == pOther->type() )
+      {
+         _stopNodeJob *pOtherJob = ( _stopNodeJob* )pOther ;
+         if ( 0 == ossStrcmp( _svcName.c_str(),
+                              pOtherJob->getSvcName().c_str() ) )
+         {
+            mutex = TRUE ;
+         }
+      }
 
       return mutex ;
    }
@@ -165,6 +174,15 @@ namespace engine
       if ( RTN_JOB_STOPNODE == pOther->type() )
       {
          _stopNodeJob *pOtherJob = ( _stopNodeJob* )pOther ;
+         if ( 0 == ossStrcmp( _svcName.c_str(),
+                              pOtherJob->getSvcName().c_str() ) )
+         {
+            mutex = TRUE ;
+         }
+      }
+      else if ( RTN_JOB_STARTNODE == pOther->type() )
+      {
+         _startNodeJob *pOtherJob = ( _startNodeJob* )pOther ;
          if ( 0 == ossStrcmp( _svcName.c_str(),
                               pOtherJob->getSvcName().c_str() ) )
          {

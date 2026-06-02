@@ -10076,7 +10076,8 @@ checking system firewall for blocked ports" ) ;
       rc = dbTool.getPluginInfoByBusinessType( businessType, pluginInfo ) ;
       if ( rc )
       {
-         _errorMsg.setError( TRUE, "Set socket keep alive failed[ %d ]", rc ) ;
+         _errorMsg.setError( TRUE, "plugin not found: businessType=%s, rc=%d",
+                             businessType.c_str(), rc ) ;
          PD_LOG( PDERROR, _errorMsg.getError() ) ;
          goto error ;
       }

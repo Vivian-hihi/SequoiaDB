@@ -156,6 +156,30 @@ namespace engine
          rc = _sendMsg2Target( *iter, msg, &conn, &result ) ;
          if ( SDB_OK == rc )
          {
+            SINT32 flag = SDB_OK ;
+            SINT64 tmpContextID = -1 ;
+            SINT32 startFrom = 0 ;
+            SINT32 numReturned = 0 ;
+            vector< BSONObj > tmpObjVec ;
+
+            INT32 extractRc = msgExtractReply( (CHAR *)result, &flag,
+                                              &tmpContextID, &startFrom,
+                                              &numReturned, tmpObjVec ) ;
+            if ( SDB_OK == extractRc && SDB_OK != flag &&
+                 SDB_DMS_EOC != flag )
+            {
+               PD_LOG( PDWARNING, "node returned error: host=%s, port=%s, "
+                       "flag=%d, try next node",
+                       iter->hostName.c_str(), iter->service.c_str(), flag ) ;
+               conn->close() ;
+               SDB_OSS_DEL conn ;
+               conn = NULL ;
+               SDB_OSS_FREE( result ) ;
+               result = NULL ;
+               rc = flag ;
+               iter++ ;
+               continue ;
+            }
             break ;
          }
 
