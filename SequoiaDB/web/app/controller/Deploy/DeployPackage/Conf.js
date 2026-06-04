@@ -221,11 +221,28 @@
          'callback': {}
       } ;
 
+      var checkHostList = function( enforced, packageName ){
+         if( SdbSwap.hostList == null )
+         {
+            return ;
+         }
+
+         $.each( SdbSwap.hostList, function( index, hostInfo ){
+            if( enforced == true )
+            {
+               hostInfo['Checked'] = true ;
+            }
+            else
+            {
+               hostInfo['Checked'] = hostInfo['Package'].indexOf( packageName ) < 0 ;
+            }
+         } ) ;
+      }
+
       if( SdbSwap.hostList != null )
       {
          $.each( SdbSwap.hostList, function( index, hostInfo ){
             hostInfo['Package'] = '' ;
-            hostInfo['Checked'] = true ;
             $.each( hostInfo['Packages'], function( index2, packageInfo ){
                if( hostInfo['Package'].length == 0 )
                {
@@ -236,37 +253,16 @@
                   hostInfo['Package'] = hostInfo['Package'] + ',' + packageInfo['Name'] ;
                }
             } ) ;
-            if( hostInfo['Package'].indexOf( 'sequoiasql-postgresql' ) > 0 )
-            {
-               hostInfo['Checked'] = false ;
-            }
          } ) ;
 
+         checkHostList( false, 'sequoiasql-mysql' ) ;
          $scope.HostListTable['body'] = SdbSwap.hostList ;
 
       }
 
       //检测主机是否可以部署包
       SdbSignal.on( 'GetCheck', function( result ){
-         if( result[0] == true )
-         {
-            $.each( SdbSwap.hostList, function( index, hostInfo ){
-               hostInfo['Checked'] = true ;
-            } ) ;
-         }
-         else
-         {
-            $.each( SdbSwap.hostList, function( index, hostInfo ){
-               if( hostInfo['Package'].indexOf( result[1] ) < 0 )
-               {
-                  hostInfo['Checked'] = true ;
-               }
-               else
-               {
-                  hostInfo['Checked'] = false ;
-               }
-            } ) ;
-         }
+         checkHostList( result[0], result[1] ) ;
       } ) ;
       
       //修改主机信息 弹窗

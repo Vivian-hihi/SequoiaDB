@@ -179,7 +179,7 @@
          }
          else if( $scope.ModuleType == 'sequoiasql-mariadb' )
          {
-            $location.path( '/Deploy/Mariadb-Mod' ).search( { 'r': new Date().getTime() } ) ;
+            $location.path( '/Deploy/MariaDB-Mod' ).search( { 'r': new Date().getTime() } ) ;
          }
       }
 
@@ -406,7 +406,7 @@
                      {
                         $scope.ModuleDesc = 'MySQL' ;
                      }
-                     else if ( $scope.ModuleType == 'sequoiasql-mysql' )
+                     else if ( $scope.ModuleType == 'sequoiasql-mariadb' )
                      {
                         $scope.ModuleDesc = 'MariaDB' ;
                      }

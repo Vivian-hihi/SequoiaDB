@@ -250,6 +250,11 @@
          var data = { 'cmd': 'query host' } ;
          SdbRest.OmOperation( data, {
             'success': function( hostList ){
+               var selectedHostName = '' ;
+               if( typeof( configure['HostInfo'] ) == 'object' && configure['HostInfo'].length > 0 && typeof( configure['HostInfo'][0]['HostName'] ) != 'undefined' )
+               {
+                  selectedHostName = configure['HostInfo'][0]['HostName'] ;
+               }
                configure['HostInfo'] = [] ;
                $.each( hostList, function( index, hostInfo ){
                   if( hostInfo['ClusterName'] == clusterName )
@@ -270,7 +275,7 @@
                         'hasPackage': hasPackage
                      } ) ;
 
-                     if( hasPackage )
+                     if( selectedHostName == hostInfo['HostName'] )
                      {
                         configure['HostInfo'].push( { 'HostName': hostInfo['HostName'] } ) ;
                      }
@@ -280,6 +285,19 @@
                hostSelectList.sort( function( a, b ){
                   return a.key > b.key ? 1 : a.key < b.key ? -1 : 0 ;
                } ) ;
+
+               if( configure['HostInfo'].length == 0 && hostSelectList.length > 0 )
+               {
+                  var defaultHostInfo = hostSelectList[0] ;
+                  $.each( hostSelectList, function( index, info ){
+                     if( info['hasPackage'] == true )
+                     {
+                        defaultHostInfo = info ;
+                        return false ;
+                     }
+                  } ) ;
+                  configure['HostInfo'].push( { 'HostName': defaultHostInfo['hostInfo']['HostName'] } ) ;
+               }
 
                getModuleConfig( configure, buildConfForm ) ;
             },
